@@ -99,7 +99,11 @@ async function getRates() {
 
 export default async function ExchangeRatesPage() {
   const data = await getRates()
-  const rates: ExchangeRate[] = data.rates || []
+  // Convert rate strings to numbers (PostgreSQL returns numeric as strings)
+  const rates: ExchangeRate[] = (data.rates || []).map((rate: any) => ({
+    ...rate,
+    rate: typeof rate.rate === 'string' ? parseFloat(rate.rate) : rate.rate
+  }))
   const usingFallback = data.usingFallback || false
   const message = data.message || ''
 
