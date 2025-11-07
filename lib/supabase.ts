@@ -147,3 +147,191 @@ export async function testSupabaseConnection() {
   }
 }
 
+// =====================================================
+// Tenant-Aware Query Functions
+// All functions below automatically filter by tenant_id
+// =====================================================
+
+// Accounts
+export async function getAccountsByTenant(tenantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'Active')
+      .order('account_id')
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching accounts:', error)
+    throw error
+  }
+}
+
+export async function getAccountById(tenantId: string, accountId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error
+    return data || null
+  } catch (error) {
+    console.error('Error fetching account:', error)
+    throw error
+  }
+}
+
+// Entities
+export async function getEntitiesByTenant(tenantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('entities')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('entity_id')
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching entities:', error)
+    throw error
+  }
+}
+
+export async function getEntityById(tenantId: string, entityId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('entities')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('entity_id', entityId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error
+    return data || null
+  } catch (error) {
+    console.error('Error fetching entity:', error)
+    throw error
+  }
+}
+
+// Transactions
+export async function getTransactionsByTenant(tenantId: string, limit?: number) {
+  try {
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('date', { ascending: false })
+
+    if (limit) {
+      query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching transactions:', error)
+    throw error
+  }
+}
+
+export async function getTransactionsByAccount(tenantId: string, accountId: string, limit?: number) {
+  try {
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId)
+      .order('date', { ascending: false })
+
+    if (limit) {
+      query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching transactions:', error)
+    throw error
+  }
+}
+
+// Payments
+export async function getPaymentsByTenant(tenantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('scheduled_date', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching payments:', error)
+    throw error
+  }
+}
+
+export async function getPaymentsByStatus(tenantId: string, status: string) {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', status)
+      .order('scheduled_date')
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching payments:', error)
+    throw error
+  }
+}
+
+// Forecasts
+export async function getForecastsByTenant(tenantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('forecasts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('date')
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching forecasts:', error)
+    throw error
+  }
+}
+
+export async function getForecastsByEntity(tenantId: string, entityId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('forecasts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('entity_id', entityId)
+      .order('date')
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching forecasts:', error)
+    throw error
+  }
+}
+
