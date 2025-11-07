@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle } from 'lucide-react'
 import { ExchangeRateCharts } from '@/components/exchange-rate-charts'
+import { getExchangeRates } from '@/lib/db'
 
 interface ExchangeRate {
   currency_code: string
@@ -41,27 +42,57 @@ const CURRENCIES: Currency[] = [
   { code: 'DKK', name: 'Danish Krone', symbol: 'kr', region: 'Denmark' },
 ]
 
+// Fallback data using last known rates
+const FALLBACK_RATES: ExchangeRate[] = [
+  { currency_code: 'EUR', currency_name: 'Euro', rate: 0.92, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'JPY', currency_name: 'Japanese Yen', rate: 149.50, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'GBP', currency_name: 'British Pound', rate: 0.79, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'AUD', currency_name: 'Australian Dollar', rate: 1.53, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'CAD', currency_name: 'Canadian Dollar', rate: 1.36, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'CHF', currency_name: 'Swiss Franc', rate: 0.88, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'CNY', currency_name: 'Chinese Yuan', rate: 7.24, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'SEK', currency_name: 'Swedish Krona', rate: 10.87, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'NZD', currency_name: 'New Zealand Dollar', rate: 1.69, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'MXN', currency_name: 'Mexican Peso', rate: 17.08, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'SGD', currency_name: 'Singapore Dollar', rate: 1.34, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'HKD', currency_name: 'Hong Kong Dollar', rate: 7.83, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'NOK', currency_name: 'Norwegian Krone', rate: 10.94, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'KRW', currency_name: 'South Korean Won', rate: 1380.45, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'TRY', currency_name: 'Turkish Lira', rate: 32.18, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'INR', currency_name: 'Indian Rupee', rate: 83.32, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'BRL', currency_name: 'Brazilian Real', rate: 4.97, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'ZAR', currency_name: 'South African Rand', rate: 18.12, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'RUB', currency_name: 'Russian Ruble', rate: 92.50, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+  { currency_code: 'DKK', currency_name: 'Danish Krone', rate: 6.89, date: new Date().toISOString().split('T')[0], source: 'fallback' },
+]
+
 async function getRates() {
-  try {
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000'
-    
-    const res = await fetch(`${baseUrl}/api/exchange-rates`, {
-      cache: 'no-store',
-    })
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`)
-    }
-    
-    return res.json()
-  } catch (error) {
-    console.error('Error fetching rates:', error)
+  // Check if database is configured
+  const useDatabase = !!process.env.DATABASE_URL
+  
+  if (!useDatabase) {
     return {
-      rates: [],
+      rates: FALLBACK_RATES,
       usingFallback: true,
-      message: 'Failed to load rates: ' + (error instanceof Error ? error.message : 'Unknown error')
+      message: 'Database not configured. Using fallback exchange rates.',
+    }
+  }
+
+  try {
+    // Call database directly (no HTTP fetch - avoids 401 from deployment protection)
+    const rates = await getExchangeRates()
+    
+    return {
+      rates: rates as ExchangeRate[],
+      usingFallback: false,
+      count: rates.length,
+    }
+  } catch (error) {
+    console.error('Error fetching rates from database:', error)
+    return {
+      rates: FALLBACK_RATES,
+      usingFallback: true,
+      message: 'Failed to load rates from database: ' + (error instanceof Error ? error.message : 'Unknown error')
     }
   }
 }
