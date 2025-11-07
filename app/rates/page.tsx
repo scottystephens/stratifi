@@ -14,12 +14,52 @@ import {
   Download,
   AlertCircle
 } from 'lucide-react'
-import { 
-  TOP_CURRENCIES, 
-  formatExchangeRate, 
-  convertFromUSD, 
-  ExchangeRate 
-} from '@/lib/currency'
+
+// Currency definitions
+const TOP_CURRENCIES = [
+  { code: 'EUR', name: 'Euro', symbol: '€', region: 'Eurozone' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', region: 'Japan' },
+  { code: 'GBP', name: 'British Pound', symbol: '£', region: 'United Kingdom' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', region: 'Australia' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', region: 'Canada' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', region: 'Switzerland' },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', region: 'China' },
+  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr', region: 'Sweden' },
+  { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$', region: 'New Zealand' },
+  { code: 'MXN', name: 'Mexican Peso', symbol: 'Mex$', region: 'Mexico' },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', region: 'Singapore' },
+  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', region: 'Hong Kong' },
+  { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr', region: 'Norway' },
+  { code: 'KRW', name: 'South Korean Won', symbol: '₩', region: 'South Korea' },
+  { code: 'TRY', name: 'Turkish Lira', symbol: '₺', region: 'Turkey' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹', region: 'India' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', region: 'Brazil' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R', region: 'South Africa' },
+  { code: 'RUB', name: 'Russian Ruble', symbol: '₽', region: 'Russia' },
+  { code: 'DKK', name: 'Danish Krone', symbol: 'kr', region: 'Denmark' },
+]
+
+interface ExchangeRate {
+  id?: number
+  currency_code: string
+  currency_name: string
+  rate: number
+  date: string
+  source: string
+  updated_at?: string
+  created_at?: string
+}
+
+function formatExchangeRate(rate: number): string {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 6,
+  }).format(rate)
+}
+
+function convertFromUSD(usdAmount: number, rate: number): number {
+  return usdAmount * rate
+}
 
 export default function ExchangeRatesPage() {
   const [rates, setRates] = useState<ExchangeRate[]>([])
@@ -37,6 +77,11 @@ export default function ExchangeRatesPage() {
       setLoading(true)
       setError(null)
       const response = await fetch('/api/exchange-rates')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.usingFallback) {
@@ -52,7 +97,7 @@ export default function ExchangeRatesPage() {
       }
     } catch (err) {
       console.error('Failed to fetch rates:', err)
-      setError('Failed to load exchange rates')
+      setError(err instanceof Error ? err.message : 'Failed to load exchange rates')
     } finally {
       setLoading(false)
     }
@@ -67,7 +112,6 @@ export default function ExchangeRatesPage() {
       const data = await response.json()
       
       if (data.success) {
-        // Refresh the rates
         await fetchRates()
       } else {
         setError(data.error || 'Update failed')
@@ -93,7 +137,7 @@ export default function ExchangeRatesPage() {
       )
     })
     .sort((a, b) => {
-      let aVal, bVal
+      let aVal: string | number, bVal: string | number
       
       if (sortField === 'rate') {
         aVal = a.rate
@@ -417,4 +461,3 @@ export default function ExchangeRatesPage() {
     </div>
   )
 }
-
