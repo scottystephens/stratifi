@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { upsertExchangeRate } from '@/lib/db'
+import { upsertExchangeRate } from '@/lib/supabase'
 import { TOP_CURRENCIES, CURRENCY_CODES } from '@/lib/currency'
 
 // Frankfurter API - Free, open source, no API key needed
@@ -42,14 +42,14 @@ export async function GET(request: Request) {
       )
     }
 
-    // Check if we're using database or fallback to in-memory
-    const useDatabase = !!process.env.DATABASE_URL
+    // Check if Supabase is configured
+    const useSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY
     
-    if (!useDatabase) {
+    if (!useSupabase) {
       return NextResponse.json({
         success: false,
-        error: 'Database not configured. Set DATABASE_URL environment variable.',
-        message: 'Exchange rates update requires database connection',
+        error: 'Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.',
+        message: 'Exchange rates update requires Supabase connection',
       }, { status: 503 })
     }
 

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getExchangeRates, getExchangeRateHistory } from '@/lib/db'
-import { ExchangeRate } from '@/lib/currency'
+import { getExchangeRates, getExchangeRateHistory, ExchangeRate } from '@/lib/supabase'
 
 // Fallback data using last known rates (if database is not available)
 const FALLBACK_RATES: ExchangeRate[] = [
@@ -33,15 +32,15 @@ export async function GET(request: Request) {
     const currencyCode = searchParams.get('currency')
     const days = searchParams.get('days')
     
-    // Check if database is configured
-    const useDatabase = !!process.env.DATABASE_URL
-    
-    if (!useDatabase) {
+  // Check if Supabase is configured
+  const useSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!useSupabase) {
       console.warn('[Exchange Rates API] Database not configured, using fallback data')
       return NextResponse.json({
         rates: FALLBACK_RATES,
         usingFallback: true,
-        message: 'Database not configured. Using fallback exchange rates.',
+        message: 'Supabase not configured. Using fallback exchange rates.',
       })
     }
     

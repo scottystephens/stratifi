@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle } from 'lucide-react'
 import { ExchangeRateCharts } from '@/components/exchange-rate-charts'
-import { getExchangeRates } from '@/lib/db'
+import { getExchangeRates } from '@/lib/supabase'
 
 interface ExchangeRate {
   currency_code: string
@@ -67,19 +67,19 @@ const FALLBACK_RATES: ExchangeRate[] = [
 ]
 
 async function getRates() {
-  // Check if database is configured
-  const useDatabase = !!process.env.DATABASE_URL
+  // Check if Supabase is configured
+  const useSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY
   
-  if (!useDatabase) {
+  if (!useSupabase) {
     return {
       rates: FALLBACK_RATES,
       usingFallback: true,
-      message: 'Database not configured. Using fallback exchange rates.',
+      message: 'Supabase not configured. Using fallback exchange rates.',
     }
   }
 
   try {
-    // Call database directly (no HTTP fetch - avoids 401 from deployment protection)
+    // Call Supabase REST API (works reliably on Vercel with both IPv4 and IPv6)
     const rates = await getExchangeRates()
     
     return {
@@ -88,11 +88,11 @@ async function getRates() {
       count: rates.length,
     }
   } catch (error) {
-    console.error('Error fetching rates from database:', error)
+    console.error('Error fetching rates from Supabase:', error)
     return {
       rates: FALLBACK_RATES,
       usingFallback: true,
-      message: 'Failed to load rates from database: ' + (error instanceof Error ? error.message : 'Unknown error')
+      message: 'Failed to load rates from Supabase: ' + (error instanceof Error ? error.message : 'Unknown error')
     }
   }
 }
