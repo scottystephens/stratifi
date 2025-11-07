@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Loader2, CheckCircle2, Building2 } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase-client'
 
 export default function OnboardingPage() {
   const [organizationName, setOrganizationName] = useState('')
@@ -16,11 +16,6 @@ export default function OnboardingPage() {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null)
   const { user } = useAuth()
   const router = useRouter()
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   // Generate slug from organization name
   const generateSlug = (name: string) => {

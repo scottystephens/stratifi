@@ -1,8 +1,8 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, use} from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { useAuth } from './auth-context'
+import { supabase } from './supabase-client'
 
 interface Tenant {
   id: string
@@ -39,11 +39,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
   const { user } = useAuth()
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   // Fetch user's tenants
   const fetchUserTenants = async () => {
