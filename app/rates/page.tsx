@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle } from 'lucide-react'
+import { ExchangeRateCharts } from '@/components/exchange-rate-charts'
 
 interface ExchangeRate {
   currency_code: string
@@ -131,7 +132,12 @@ export default async function ExchangeRatesPage() {
           </Card>
         </div>
 
-        <Card className="p-6">
+        {/* Interactive Charts */}
+        {rates.length > 0 && !usingFallback && (
+          <ExchangeRateCharts rates={rates} />
+        )}
+
+        <Card className="p-6 mt-6">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
