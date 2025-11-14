@@ -28,6 +28,13 @@ export function BunqConnectButton({
     try {
       setIsConnecting(true);
 
+      // Debug: Log what we're sending
+      console.log('🔵 Bunq Connect - Request Data:', {
+        tenantId,
+        connectionName,
+        accountId,
+      });
+
       // Call the authorize API to create connection and get OAuth URL
       const response = await fetch('/api/connections/bunq/authorize', {
         method: 'POST',
@@ -43,9 +50,28 @@ export function BunqConnectButton({
 
       const data = await response.json();
 
+      // Debug: Log the response
+      console.log('🔵 Bunq Connect - API Response:', {
+        status: response.status,
+        ok: response.ok,
+        data,
+      });
+
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to initiate Bunq connection');
+        // Show detailed error information for debugging
+        const errorDetails = [
+          `Status: ${response.status}`,
+          `Error: ${data.error || 'Unknown error'}`,
+          data.details ? `Details: ${data.details}` : null,
+          data.debug ? `Debug: ${JSON.stringify(data.debug)}` : null,
+        ].filter(Boolean).join('\n');
+        
+        console.error('🔴 Bunq Connect - Error Details:', errorDetails);
+        throw new Error(errorDetails);
       }
+
+      // Debug: Success
+      console.log('✅ Bunq Connect - Success! Redirecting to:', data.authorizationUrl);
 
       // Redirect to Bunq OAuth page
       window.location.href = data.authorizationUrl;
@@ -54,10 +80,13 @@ export function BunqConnectButton({
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to connect to Bunq';
       
+      // Show detailed error in alert for debugging
+      const debugMessage = `Bunq Connection Error:\n\n${errorMessage}\n\nPlease check:\n1. Are you logged in?\n2. Do you have an organization selected?\n3. Check browser console (F12) for more details`;
+      
       if (onError) {
         onError(errorMessage);
       } else {
-        alert(`Error: ${errorMessage}`);
+        alert(debugMessage);
       }
       
       setIsConnecting(false);
