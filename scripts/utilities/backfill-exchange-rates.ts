@@ -1,7 +1,7 @@
 // Backfill historical exchange rates from Frankfurter API
-// Usage: ts-node scripts/backfill-exchange-rates.ts
+// Usage: npx tsx scripts/utilities/backfill-exchange-rates.ts
 
-import { upsertExchangeRate } from '../lib/db'
+import { upsertExchangeRate } from '../../lib/supabase'
 
 const FRANKFURTER_API = 'https://api.frankfurter.app'
 const CURRENCY_CODES = ['EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD', 'MXN', 'SGD', 'HKD', 'NOK', 'KRW', 'TRY', 'INR', 'BRL', 'ZAR', 'RUB', 'DKK']
