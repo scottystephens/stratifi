@@ -2,28 +2,43 @@
 // Creates a connection and redirects user to Bunq OAuth page
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createServerClient } from '@supabase/ssr';
 import { getBunqAuthorizationUrl, generateOAuthState } from '@/lib/bunq-client';
 import { createConnection } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user from server-side client
-    const supabaseClient = await createClient();
+    // Create Supabase client using request cookies directly (fixes session issue)
+    const supabaseClient = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            // Cannot set cookies in API route
+          },
+        },
+      }
+    );
+
     const {
       data: { user },
       error: authError,
     } = await supabaseClient.auth.getUser();
 
-    console.log('Auth check:', { hasUser: !!user, authError, headers: req.headers.get('cookie') ? 'present' : 'missing' });
+    console.log('Auth check:', { hasUser: !!user, authError, cookies: req.cookies.getAll().length });
 
     if (!user) {
       return NextResponse.json({ 
         error: 'Unauthorized', 
         details: authError?.message || 'Not authenticated',
         debug: {
-          hasCookies: !!req.headers.get('cookie'),
-          authError: authError?.message
+          cookieCount: req.cookies.getAll().length,
+          authError: authError?.message || 'No auth error',
+          url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing',
         }
       }, { status: 401 });
     }
