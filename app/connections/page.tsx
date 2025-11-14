@@ -21,6 +21,7 @@ interface Connection {
   data_type?: string;
   supports_transactions?: boolean;
   supports_statements?: boolean;
+  last_error?: string | null;
 }
 
 export default function ConnectionsPage() {
@@ -336,10 +337,20 @@ export default function ConnectionsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Status</span>
-                      <Badge className={getStatusColor(connection.status)}>
+                      <Badge 
+                        className={getStatusColor(connection.status)}
+                        title={connection.status === 'error' && connection.last_error ? connection.last_error : undefined}
+                      >
                         {connection.status}
                       </Badge>
                     </div>
+
+                    {/* Show error message if exists */}
+                    {connection.status === 'error' && connection.last_error && (
+                      <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                        <strong>Error:</strong> {connection.last_error}
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Data Type</span>
