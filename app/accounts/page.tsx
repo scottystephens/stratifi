@@ -120,10 +120,10 @@ export default function AccountsPage() {
     <div className="flex h-screen">
       <Navigation />
 
-      <main className="flex-1 overflow-y-auto bg-background p-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="max-w-[1600px] mx-auto px-6 py-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Accounts</h1>
               <p className="text-muted-foreground mt-2">
@@ -165,7 +165,7 @@ export default function AccountsPage() {
 
           {/* Accounts Grid */}
           {!loading && accounts.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {accounts.map((account) => (
                 <Card key={account.account_id || account.id} className="p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">

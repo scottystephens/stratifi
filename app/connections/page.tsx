@@ -134,8 +134,8 @@ export default function ConnectionsPage() {
     <div className="flex h-screen">
       <Navigation />
       
-      <main className="flex-1 overflow-y-auto bg-background p-8">
-        <div className="max-w-6xl mx-auto">
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="max-w-[1600px] mx-auto px-6 py-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
@@ -179,7 +179,7 @@ export default function ConnectionsPage() {
 
           {/* Connections Grid */}
           {!loading && connections.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {connections.map((connection) => (
                 <Card key={connection.id} className="p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
