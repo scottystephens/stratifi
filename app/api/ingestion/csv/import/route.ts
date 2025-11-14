@@ -16,15 +16,22 @@ import { createClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user session from server-side client
+    // Get user from server-side client
     const supabase = await createClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      console.error('No user found:', authError);
+      return NextResponse.json({ 
+        error: 'Unauthorized', 
+        details: authError?.message || 'No user session found' 
+      }, { status: 401 });
     }
+
+    console.log('Authenticated user:', user.id);
 
     const body = await req.json();
     const {
@@ -60,7 +67,7 @@ export async function POST(req: NextRequest) {
         },
         account_id: accountId,
         import_mode: importMode || 'append',
-        created_by: session.user.id,
+        created_by: user.id,
       });
     } catch (error) {
       console.error('Error creating connection:', error);
@@ -179,7 +186,7 @@ export async function POST(req: NextRequest) {
           recordsImported: imported.length,
           importMode,
         },
-        user_id: session.user.id,
+        user_id: user.id,
       });
 
       return NextResponse.json({
