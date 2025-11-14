@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
         .from('accounts')
         .select('*')
         .eq('tenant_id', tenantId)
-        .eq('id', accountId)
+        .eq('account_id', accountId) // Use account_id (primary key in database)
         .single();
 
       if (error) {
@@ -93,11 +93,22 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const updatedAccount = await updateAccount(tenantId, accountId, updates);
+    // Update using account_id field
+    const { data, error } = await supabase
+      .from('accounts')
+      .update(updates)
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      account: updatedAccount,
+      account: data,
     });
   } catch (error) {
     console.error('Update account error:', error);
@@ -121,7 +132,16 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await deleteAccount(tenantId, accountId);
+    // Delete using account_id field
+    const { error } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,

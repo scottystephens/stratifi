@@ -2,6 +2,7 @@
 
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import { randomUUID } from 'crypto';
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
@@ -64,9 +65,10 @@ async function ensureEntity() {
   return entity.entity_id;
 }
 
+// Generate proper UUIDs for industry-standard compliance
 const testAccounts = [
   {
-    account_id: 'ACC-CHK-001',
+    account_id: randomUUID(),
     account_name: 'Main Operating Account',
     account_number: 'CHK-1001234567',
     account_type: 'checking',
@@ -77,7 +79,7 @@ const testAccounts = [
     status: 'Active',
   },
   {
-    account_id: 'ACC-SAV-001',
+    account_id: randomUUID(),
     account_name: 'Savings Reserve Account',
     account_number: 'SAV-3001234567',
     account_type: 'savings',
@@ -88,7 +90,7 @@ const testAccounts = [
     status: 'Active',
   },
   {
-    account_id: 'ACC-EUR-001',
+    account_id: randomUUID(),
     account_name: 'EUR Operations Account',
     account_number: 'CHK-4001234567',
     account_type: 'checking',
@@ -99,7 +101,7 @@ const testAccounts = [
     status: 'Active',
   },
   {
-    account_id: 'ACC-CC-001',
+    account_id: randomUUID(),
     account_name: 'Business Credit Card',
     account_number: 'CC-5001234567',
     account_type: 'credit_card',
