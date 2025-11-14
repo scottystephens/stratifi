@@ -350,16 +350,32 @@ export async function createConnection(connection: {
   oauth_state?: string
 }) {
   try {
+    console.log('📝 createConnection - Input data:', JSON.stringify(connection, null, 2));
+    console.log('📝 createConnection - Service key available:', !!supabaseServiceKey);
+    
     const { data, error } = await supabase
       .from('connections')
       .insert(connection)
       .select()
       .single()
     
-    if (error) throw error
+    console.log('📝 createConnection - Result:', { 
+      success: !!data, 
+      error: error ? {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      } : null 
+    });
+    
+    if (error) {
+      console.error('❌ createConnection - Database error:', JSON.stringify(error, null, 2));
+      throw new Error(`Database error: ${error.message} (${error.code})`);
+    }
     return data
   } catch (error) {
-    console.error('Error creating connection:', error)
+    console.error('❌ createConnection - Exception:', error);
     throw error
   }
 }
