@@ -4,11 +4,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConnections, deleteConnection } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase-client';
+import { createClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
   try {
-    // Get user session
+    // Get user session from server-side client
+    const supabase = await createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -46,7 +47,8 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    // Get user session
+    // Get user session from server-side client
+    const supabase = await createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();

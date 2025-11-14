@@ -12,14 +12,15 @@ import {
   deleteTransactionsByConnection,
   createAuditLog,
 } from '@/lib/supabase';
-import { supabase as supabaseClient } from '@/lib/supabase-client';
+import { createClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user session
+    // Get user session from server-side client
+    const supabase = await createClient();
     const {
       data: { session },
-    } = await supabaseClient.auth.getSession();
+    } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
