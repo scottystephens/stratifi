@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Navigation } from '@/components/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import type { Account } from '@/lib/supabase';
 
 const ACCOUNT_TYPES = [
@@ -258,6 +258,7 @@ export default function EditAccountPage() {
                         setAccount({ ...account, bank_name: e.target.value })
                       }
                       className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., Chase Bank"
                     />
                   </div>
 
@@ -272,25 +273,169 @@ export default function EditAccountPage() {
                         setAccount({ ...account, bank_identifier: e.target.value })
                       }
                       className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., CHASUS33 or 021000021"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block font-medium mb-2">Branch Name</label>
+                    <input
+                      type="text"
+                      value={account.branch_name || ''}
+                      onChange={(e) =>
+                        setAccount({ ...account, branch_name: e.target.value })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., Manhattan Main Branch"
                     />
                   </div>
                 </div>
               </Card>
 
-              {/* Notes */}
-              {account.notes !== undefined && (
+              {/* Limits & Controls */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Limits & Controls</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block font-medium mb-2">Credit Limit</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={account.credit_limit || ''}
+                      onChange={(e) =>
+                        setAccount({
+                          ...account,
+                          credit_limit: e.target.value ? parseFloat(e.target.value) : undefined,
+                        })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-2">Overdraft Limit</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={account.overdraft_limit || ''}
+                      onChange={(e) =>
+                        setAccount({
+                          ...account,
+                          overdraft_limit: e.target.value ? parseFloat(e.target.value) : undefined,
+                        })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Categorization */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Categorization</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block font-medium mb-2">Business Unit</label>
+                    <input
+                      type="text"
+                      value={account.business_unit || ''}
+                      onChange={(e) =>
+                        setAccount({ ...account, business_unit: e.target.value })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., North America Operations"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-2">Cost Center</label>
+                    <input
+                      type="text"
+                      value={account.cost_center || ''}
+                      onChange={(e) =>
+                        setAccount({ ...account, cost_center: e.target.value })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., CC-1001"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-2">GL Account Code</label>
+                    <input
+                      type="text"
+                      value={account.gl_account_code || ''}
+                      onChange={(e) =>
+                        setAccount({ ...account, gl_account_code: e.target.value })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., 1000-100-001"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block font-medium mb-2">Purpose</label>
+                    <input
+                      type="text"
+                      value={account.purpose || ''}
+                      onChange={(e) =>
+                        setAccount({ ...account, purpose: e.target.value })
+                      }
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="e.g., Operating expenses for Q1 2025"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Custom Fields */}
+              {account.custom_fields && (
                 <Card className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Notes</h2>
-                  <textarea
-                    value={account.notes || ''}
-                    onChange={(e) =>
-                      setAccount({ ...account, notes: e.target.value })
-                    }
-                    className="w-full border rounded px-3 py-2"
-                    rows={4}
-                  />
+                  <h2 className="text-xl font-semibold mb-4">Custom Fields</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Custom fields for this account
+                  </p>
+                  <div className="space-y-3">
+                    {Object.entries(account.custom_fields).map(([key, value]: [string, any]) => (
+                      <div key={key} className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            {value.label || key}
+                          </label>
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            value={value.value || ''}
+                            onChange={(e) => {
+                              const updated = { ...account.custom_fields };
+                              updated[key] = { ...value, value: e.target.value };
+                              setAccount({ ...account, custom_fields: updated });
+                            }}
+                            className="w-full border rounded px-3 py-2"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </Card>
               )}
+
+              {/* Notes */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Notes</h2>
+                <textarea
+                  value={account.notes || ''}
+                  onChange={(e) =>
+                    setAccount({ ...account, notes: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  rows={4}
+                  placeholder="Add any additional notes or documentation..."
+                />
+              </Card>
 
               {/* Actions */}
               <div className="flex justify-end gap-4">
