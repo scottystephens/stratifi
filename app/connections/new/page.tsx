@@ -213,11 +213,12 @@ export default function NewConnectionPage() {
                   className="hidden"
                   id="file-upload"
                 />
-                <label htmlFor="file-upload">
-                  <Button type="button" className="cursor-pointer">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Choose File
-                  </Button>
+                <label 
+                  htmlFor="file-upload"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 cursor-pointer transition-colors"
+                >
+                  <FileText className="h-4 w-4" />
+                  Choose File
                 </label>
               </div>
             </Card>
