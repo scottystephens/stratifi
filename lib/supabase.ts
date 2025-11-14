@@ -152,41 +152,6 @@ export async function testSupabaseConnection() {
 // All functions below automatically filter by tenant_id
 // =====================================================
 
-// Accounts
-export async function getAccountsByTenant(tenantId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'Active')
-      .order('account_id')
-
-    if (error) throw error
-    return data || []
-  } catch (error) {
-    console.error('Error fetching accounts:', error)
-    throw error
-  }
-}
-
-export async function getAccountById(tenantId: string, accountId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('account_id', accountId)
-      .single()
-
-    if (error && error.code !== 'PGRST116') throw error
-    return data || null
-  } catch (error) {
-    console.error('Error fetching account:', error)
-    throw error
-  }
-}
-
 // Entities
 export async function getEntitiesByTenant(tenantId: string) {
   try {
