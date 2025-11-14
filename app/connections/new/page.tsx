@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '@/lib/tenant-context';
+import { useAuth } from '@/lib/auth-context';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ interface ParsedData {
 export default function NewConnectionPage() {
   const router = useRouter();
   const { currentTenant } = useTenant();
+  const { user } = useAuth();
   
   const [step, setStep] = useState<Step>('upload');
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
@@ -110,7 +112,10 @@ export default function NewConnectionPage() {
 
   // Step 3: Import
   async function handleImport() {
-    if (!uploadedFile || !currentTenant || !selectedAccountId) return;
+    if (!uploadedFile || !currentTenant || !selectedAccountId || !user) {
+      alert('Missing required information. Please ensure you are logged in.');
+      return;
+    }
 
     try {
       setImporting(true);
@@ -127,6 +132,7 @@ export default function NewConnectionPage() {
           accountId: selectedAccountId,
           tenantId: currentTenant.id,
           importMode,
+          userId: user.id, // Pass user ID from auth context
         }),
       });
 

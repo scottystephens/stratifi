@@ -16,23 +16,6 @@ import { createClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user from server-side client
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.error('No user found:', authError);
-      return NextResponse.json({ 
-        error: 'Unauthorized', 
-        details: authError?.message || 'No user session found' 
-      }, { status: 401 });
-    }
-
-    console.log('Authenticated user:', user.id);
-
     const body = await req.json();
     const {
       content,
@@ -43,16 +26,36 @@ export async function POST(req: NextRequest) {
       connectionName,
       accountId,
       tenantId,
-      importMode, // 'append' or 'override'
+      importMode,
+      userId, // We'll pass this from the client
     } = body;
 
     // Validate required fields
-    if (!content || !columnMapping || !connectionName || !accountId || !tenantId) {
+    if (!content || !columnMapping || !connectionName || !accountId || !tenantId || !userId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+
+    // Verify user has access to this tenant by checking user_tenants table
+    const supabase = await createClient();
+    const { data: userTenant, error: tenantCheckError } = await supabase
+      .from('user_tenants')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (tenantCheckError || !userTenant) {
+      console.error('User not authorized for tenant:', { userId, tenantId, error: tenantCheckError });
+      return NextResponse.json(
+        { error: 'Unauthorized - User does not have access to this organization' },
+        { status: 403 }
+      );
+    }
+
+    console.log('User authorized:', { userId, tenantId, role: userTenant.role });
 
     // Step 1: Create connection record
     let connection;
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
         },
         account_id: accountId,
         import_mode: importMode || 'append',
-        created_by: user.id,
+        created_by: userId,
       });
     } catch (error) {
       console.error('Error creating connection:', error);
@@ -186,7 +189,7 @@ export async function POST(req: NextRequest) {
           recordsImported: imported.length,
           importMode,
         },
-        user_id: user.id,
+        user_id: userId,
       });
 
       return NextResponse.json({
