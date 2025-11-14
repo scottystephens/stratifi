@@ -41,3 +41,6 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+
+# Data backups (keep locally, don't commit to git)
+/data/backups/
