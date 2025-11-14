@@ -21,16 +21,23 @@ interface Connection {
 
 export default function ConnectionsPage() {
   const router = useRouter();
-  const { currentTenant } = useTenant();
+  const { currentTenant, userTenants } = useTenant();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
+    // If no tenant at all, redirect to onboarding
+    if (userTenants.length === 0 && !loading) {
+      router.push('/onboarding');
+      return;
+    }
+
+    // If we have tenants but none is selected, wait for tenant context to load
     if (currentTenant) {
       loadConnections();
     }
-  }, [currentTenant]);
+  }, [currentTenant, userTenants, router]);
 
   async function loadConnections() {
     if (!currentTenant) return;
@@ -102,8 +109,22 @@ export default function ConnectionsPage() {
 
   if (!currentTenant) {
     return (
-      <div className="p-8">
-        <p>Please select an organization</p>
+      <div className="flex h-screen">
+        <main className="flex-1 overflow-y-auto bg-background p-8">
+          <Card className="p-12 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-4">No Organization Selected</h2>
+            <p className="text-muted-foreground mb-6">
+              {userTenants.length === 0
+                ? "You don't have any organizations yet. Create one to get started."
+                : "Please select an organization from the sidebar to view connections."}
+            </p>
+            {userTenants.length === 0 && (
+              <Button onClick={() => router.push('/onboarding')}>
+                Create Organization
+              </Button>
+            )}
+          </Card>
+        </main>
       </div>
     );
   }

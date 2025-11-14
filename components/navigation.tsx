@@ -15,7 +15,10 @@ import {
   Check,
   LogOut,
   Users,
-  UserCircle2
+  UserCircle2,
+  Database,
+  Menu,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTenant } from '@/lib/tenant-context'
@@ -28,6 +31,7 @@ const navigation = [
   { name: 'Payments', href: '/payments', icon: Send },
   { name: 'Analytics', href: '/analytics', icon: TrendingUp },
   { name: 'Exchange Rates', href: '/rates', icon: DollarSign },
+  { name: 'Connections', href: '/connections', icon: Database },
 ]
 
 export function Navigation() {
@@ -36,6 +40,7 @@ export function Navigation() {
   const { user, signOut } = useAuth()
   const [tenantMenuOpen, setTenantMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -46,19 +51,34 @@ export function Navigation() {
   }
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-card">
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">T</span>
-          </div>
-          <span className="text-xl font-bold">TreasuryX</span>
-        </Link>
+    <div className={cn(
+      "flex h-screen flex-col border-r bg-card transition-all duration-300",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
+      {/* Logo & Collapse Button */}
+      <div className="flex h-16 items-center justify-between border-b px-3">
+        {!isCollapsed && (
+          <Link href="/dashboard" className="flex items-center space-x-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <span className="text-lg font-bold text-primary-foreground">T</span>
+            </div>
+            <span className="text-xl font-bold">TreasuryX</span>
+          </Link>
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "p-2 rounded-lg hover:bg-accent transition-colors",
+            isCollapsed && "mx-auto"
+          )}
+          title={isCollapsed ? "Expand menu" : "Collapse menu"}
+        >
+          {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+        </button>
       </div>
 
       {/* Tenant Switcher */}
-      {currentTenant && (
+      {currentTenant && !isCollapsed && (
         <div className="border-b p-3">
           <button
             onClick={() => setTenantMenuOpen(!tenantMenuOpen)}
@@ -108,6 +128,15 @@ export function Navigation() {
         </div>
       )}
       
+      {/* Collapsed Tenant Indicator */}
+      {currentTenant && isCollapsed && (
+        <div className="border-b p-3 flex justify-center">
+          <div className="p-2 rounded-lg bg-accent/50">
+            <Building2 className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+      )}
+      
       {/* Main Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
@@ -117,14 +146,16 @@ export function Navigation() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isCollapsed ? 'justify-center' : 'space-x-3',
                 isActive
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
+              title={isCollapsed ? item.name : undefined}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span>{item.name}</span>}
             </Link>
           )
         })}
@@ -136,22 +167,30 @@ export function Navigation() {
         <div className="p-3 space-y-1">
           <Link
             href="/settings"
-            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className={cn(
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              isCollapsed ? "justify-center" : "space-x-3"
+            )}
+            title={isCollapsed ? "Settings" : undefined}
           >
-            <Settings className="h-5 w-5" />
-            <span>Settings</span>
+            <Settings className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span>Settings</span>}
           </Link>
           <Link
             href="/team"
-            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className={cn(
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              isCollapsed ? "justify-center" : "space-x-3"
+            )}
+            title={isCollapsed ? "Team" : undefined}
           >
-            <Users className="h-5 w-5" />
-            <span>Team</span>
+            <Users className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span>Team</span>}
           </Link>
         </div>
 
         {/* User Menu */}
-        {user && (
+        {user && !isCollapsed && (
           <div className="border-t p-3">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -181,6 +220,19 @@ export function Navigation() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Collapsed User Icon */}
+        {user && isCollapsed && (
+          <div className="border-t p-3 flex justify-center">
+            <button
+              onClick={handleSignOut}
+              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="h-5 w-5 text-red-600" />
+            </button>
           </div>
         )}
       </div>
