@@ -12,10 +12,20 @@ export async function POST(req: NextRequest) {
     const supabaseClient = await createClient();
     const {
       data: { user },
+      error: authError,
     } = await supabaseClient.auth.getUser();
 
+    console.log('Auth check:', { hasUser: !!user, authError, headers: req.headers.get('cookie') ? 'present' : 'missing' });
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ 
+        error: 'Unauthorized', 
+        details: authError?.message || 'Not authenticated',
+        debug: {
+          hasCookies: !!req.headers.get('cookie'),
+          authError: authError?.message
+        }
+      }, { status: 401 });
     }
 
     // Parse request body
