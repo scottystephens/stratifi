@@ -2,7 +2,6 @@
 // Central registry for all banking providers
 
 import { BankingProvider, ProviderMetadata } from './base-provider';
-import { bunqProvider } from './bunq-provider';
 import { tinkProvider } from './tink-provider';
 
 /**
@@ -14,18 +13,6 @@ class ProviderRegistry {
 
   constructor() {
     // Register providers here
-    this.registerProvider({
-      providerId: 'bunq',
-      displayName: 'Bunq',
-      factory: () => bunqProvider,
-      enabled: true,
-      requiredEnvVars: [
-        'BUNQ_CLIENT_ID',
-        'BUNQ_CLIENT_SECRET',
-        'BUNQ_REDIRECT_URI',
-      ],
-    });
-
     this.registerProvider({
       providerId: 'tink',
       displayName: 'Tink (3,500+ European Banks)',

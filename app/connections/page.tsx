@@ -22,6 +22,7 @@ interface Connection {
   supports_transactions?: boolean;
   supports_statements?: boolean;
   last_error?: string | null;
+  provider?: string; // Banking provider ID (e.g., 'tink')
 }
 
 export default function ConnectionsPage() {
@@ -89,54 +90,39 @@ export default function ConnectionsPage() {
     }
   }
 
-  async function handleSyncBunq(connectionId: string) {
+  async function handleSyncBankingProvider(connectionId: string, providerId: string) {
     if (!currentTenant) return;
     
     try {
       setSyncing(connectionId);
       
-      // First sync accounts
-      const accountsResponse = await fetch('/api/connections/bunq/sync-accounts', {
+      // Use generic banking provider sync endpoint
+      const syncResponse = await fetch(`/api/banking/${providerId}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           connectionId,
           tenantId: currentTenant.id,
+          syncAccounts: true,
+          syncTransactions: true,
         }),
       });
       
-      const accountsData = await accountsResponse.json();
+      const syncData = await syncResponse.json();
       
-      if (!accountsData.success) {
-        throw new Error(accountsData.error || 'Failed to sync accounts');
-      }
-      
-      // Then sync transactions
-      const transactionsResponse = await fetch('/api/connections/bunq/sync-transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          connectionId,
-          tenantId: currentTenant.id,
-          count: 200,
-        }),
-      });
-      
-      const transactionsData = await transactionsResponse.json();
-      
-      if (!transactionsData.success) {
-        throw new Error(transactionsData.error || 'Failed to sync transactions');
+      if (!syncData.success) {
+        throw new Error(syncData.error || 'Failed to sync');
       }
       
       // Reload connections to show updated sync time
       await loadConnections();
       
       alert(
-        `Sync complete!\nAccounts: ${accountsData.accounts.length}\nTransactions: ${transactionsData.summary.imported} imported`
+        `Sync complete!\nAccounts: ${syncData.accountsSynced || 0}\nTransactions: ${syncData.transactionsSynced || 0} synced`
       );
     } catch (error) {
       console.error('Sync error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to sync with Bunq');
+      alert(error instanceof Error ? error.message : 'Failed to sync');
     } finally {
       setSyncing(null);
     }
@@ -148,11 +134,9 @@ export default function ConnectionsPage() {
         return <FileText className="h-5 w-5" />;
       case 'bai2':
         return <Database className="h-5 w-5" />;
-      case 'bunq_oauth':
-      case 'bunq':
-        return <Building2 className="h-5 w-5 text-orange-600" />;
       default:
-        return <Database className="h-5 w-5" />;
+        // For banking providers, use generic icon
+        return <Building2 className="h-5 w-5" />;
     }
   }
   
@@ -160,10 +144,8 @@ export default function ConnectionsPage() {
     switch (type) {
       case 'csv':
         return 'bg-blue-100';
-      case 'bunq_oauth':
-      case 'bunq':
-        return 'bg-orange-100';
       default:
+        // For banking providers, use generic color
         return 'bg-blue-100';
     }
   }
@@ -307,12 +289,11 @@ export default function ConnectionsPage() {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      {(connection.connection_type === 'bunq_oauth' ||
-                        connection.connection_type === 'bunq') && (
+                      {connection.provider && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleSyncBunq(connection.id)}
+                          onClick={() => handleSyncBankingProvider(connection.id, connection.provider!)}
                           disabled={syncing === connection.id}
                           title="Sync now"
                         >
