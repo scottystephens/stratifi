@@ -115,22 +115,26 @@ export async function GET(
       });
 
       // Store OAuth tokens in generic provider_tokens table
-      const { error: tokenError } = await supabase.from('provider_tokens').insert({
-        tenant_id: connection.tenant_id,
-        connection_id: connection.id,
-        provider_id: providerId,
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken || null,
-        token_type: tokens.tokenType || 'Bearer',
-        expires_at: tokens.expiresAt?.toISOString() || null,
-        scopes: tokens.scope || [],
-        provider_user_id: userInfo.userId,
-        provider_metadata: userInfo.metadata || {},
-        status: 'active',
-      });
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('provider_tokens')
+        .insert({
+          tenant_id: connection.tenant_id,
+          connection_id: connection.id,
+          provider_id: providerId,
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken || null,
+          token_type: tokens.tokenType || 'Bearer',
+          expires_at: tokens.expiresAt?.toISOString() || null,
+          scopes: tokens.scope || [],
+          provider_user_id: userInfo.userId,
+          provider_metadata: userInfo.metadata || {},
+          status: 'active',
+        })
+        .select()
+        .single();
 
-      if (tokenError) {
-        throw new Error(`Failed to store OAuth token: ${tokenError.message}`);
+      if (tokenError || !tokenData) {
+        throw new Error(`Failed to store OAuth token: ${tokenError?.message || 'Unknown error'}`);
       }
 
       // Update connection status
@@ -152,9 +156,13 @@ export async function GET(
 
       // Automatically sync accounts and transactions after successful OAuth
       // This runs in the background and won't block the redirect
+      // Use the tokenData we just inserted to avoid race conditions
       (async () => {
         try {
           console.log('Starting automatic sync after OAuth...');
+          
+          // Small delay to ensure token is fully committed
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Create ingestion job
           const ingestionJob = await createIngestionJob({
@@ -164,15 +172,7 @@ export async function GET(
             status: 'running',
           });
 
-          // Get provider tokens (just stored above)
-          const { data: tokenData } = await supabase
-            .from('provider_tokens')
-            .select('*')
-            .eq('connection_id', connection.id)
-            .eq('provider_id', providerId)
-            .eq('status', 'active')
-            .single();
-
+          // Use the tokenData we just inserted (avoid race condition)
           if (tokenData) {
             const credentials = {
               connectionId: connection.id,
@@ -272,12 +272,25 @@ export async function GET(
               console.log(`✅ Automatic sync completed: ${accountsSynced} accounts synced`);
             } catch (syncError) {
               console.error('Automatic sync error:', syncError);
+              
+              // Properly format error message
+              let errorMessage = 'Unknown error';
+              if (syncError instanceof Error) {
+                errorMessage = syncError.message;
+              } else if (typeof syncError === 'object' && syncError !== null) {
+                errorMessage = JSON.stringify(syncError);
+              } else {
+                errorMessage = String(syncError);
+              }
+              
               await updateIngestionJob(ingestionJob.id, {
                 status: 'failed',
-                error_message: syncError instanceof Error ? syncError.message : 'Unknown error',
+                error_message: errorMessage,
                 completed_at: new Date().toISOString(),
               });
             }
+          } else {
+            console.warn('Token data not available for automatic sync');
           }
         } catch (syncError) {
           // Don't fail the OAuth flow if sync fails - user can sync manually later
