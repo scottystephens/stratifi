@@ -136,6 +136,7 @@ export function getTinkAuthorizationUrl(state: string, market: string = 'NL'): s
     scope: 'accounts:read,transactions:read',
     state: state,
     market: market,
+    prompt: 'login', // Force login screen every time (don't use cached sessions)
   });
   
   const authUrl = `${TINK_CONFIG.authorizeUrl}?${params.toString()}`;
