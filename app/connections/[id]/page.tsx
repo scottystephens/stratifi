@@ -7,7 +7,7 @@ import { Navigation } from '@/components/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, RefreshCw, Trash2, CheckCircle2, AlertCircle, Clock, Building2, CreditCard, TrendingUp } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Trash2, CheckCircle2, AlertCircle, Clock, Building2, CreditCard, TrendingUp, Activity, Zap, AlertTriangle } from 'lucide-react';
 
 interface Connection {
   id: string;
@@ -25,6 +25,23 @@ interface Connection {
   last_error?: string | null;
   provider?: string;
   config?: any;
+  // New metadata fields
+  total_accounts?: number;
+  active_accounts?: number;
+  total_transactions?: number;
+  last_transaction_date?: string | null;
+  last_successful_sync_at?: string | null;
+  consecutive_failures?: number;
+  sync_health_score?: number;
+  sync_summary?: {
+    accounts_synced?: number;
+    accounts_created?: number;
+    accounts_updated?: number;
+    transactions_synced?: number;
+    sync_duration_ms?: number;
+    errors?: string[];
+    warnings?: string[];
+  };
 }
 
 interface ProviderToken {
@@ -215,6 +232,58 @@ export default function ConnectionDetailPage() {
     }
   }
 
+  function getHealthStatus(score: number | undefined): {
+    label: string;
+    color: string;
+    bgColor: string;
+    icon: React.ReactNode;
+  } {
+    if (score === undefined || score === null) {
+      return {
+        label: 'Unknown',
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-100',
+        icon: <Activity className="h-5 w-5 text-gray-600" />,
+      };
+    }
+
+    if (score >= 0.9) {
+      return {
+        label: 'Excellent',
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+        icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+      };
+    } else if (score >= 0.75) {
+      return {
+        label: 'Good',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
+        icon: <Zap className="h-5 w-5 text-blue-600" />,
+      };
+    } else if (score >= 0.5) {
+      return {
+        label: 'Fair',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-100',
+        icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />,
+      };
+    } else {
+      return {
+        label: 'Poor',
+        color: 'text-red-600',
+        bgColor: 'bg-red-100',
+        icon: <AlertCircle className="h-5 w-5 text-red-600" />,
+      };
+    }
+  }
+
+  function formatDuration(ms: number): string {
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    return `${(ms / 60000).toFixed(1)}m`;
+  }
+
   if (loading || !connection) {
     return (
       <div className="flex h-screen">
@@ -268,7 +337,33 @@ export default function ConnectionDetailPage() {
           </div>
 
           {/* Connection Overview */}
-          <div className="grid gap-6 md:grid-cols-3 mb-6">
+          <div className="grid gap-6 md:grid-cols-4 mb-6">
+            {/* Health Score Card */}
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg ${getHealthStatus(connection.sync_health_score).bgColor}`}>
+                  {getHealthStatus(connection.sync_health_score).icon}
+                </div>
+                <h3 className="font-semibold">Health</h3>
+              </div>
+              <div className="space-y-2">
+                <p className={`text-2xl font-bold ${getHealthStatus(connection.sync_health_score).color}`}>
+                  {connection.sync_health_score !== undefined 
+                    ? `${(connection.sync_health_score * 100).toFixed(0)}%`
+                    : 'N/A'}
+                </p>
+                <Badge className={getHealthStatus(connection.sync_health_score).bgColor + ' ' + getHealthStatus(connection.sync_health_score).color}>
+                  {getHealthStatus(connection.sync_health_score).label}
+                </Badge>
+                {connection.consecutive_failures > 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {connection.consecutive_failures} consecutive failures
+                  </p>
+                )}
+              </div>
+            </Card>
+
+            {/* Status Card */}
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -280,34 +375,117 @@ export default function ConnectionDetailPage() {
                 {connection.status}
               </Badge>
               {connection.last_error && (
-                <p className="text-xs text-red-600 mt-2">{connection.last_error}</p>
+                <p className="text-xs text-red-600 mt-2 line-clamp-2">{connection.last_error}</p>
               )}
             </Card>
 
+            {/* Accounts Card */}
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <CreditCard className="h-5 w-5 text-green-600" />
                 </div>
-                <h3 className="font-semibold">Accounts Synced</h3>
+                <h3 className="font-semibold">Accounts</h3>
               </div>
-              <p className="text-3xl font-bold">{accounts.length}</p>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold">{connection.total_accounts || accounts.length}</p>
+                <p className="text-sm text-muted-foreground">
+                  {connection.active_accounts || accounts.filter(a => a.status === 'active').length} active
+                </p>
+              </div>
             </Card>
 
+            {/* Transactions Card */}
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-purple-600" />
                 </div>
-                <h3 className="font-semibold">Last Sync</h3>
+                <h3 className="font-semibold">Transactions</h3>
               </div>
-              <p className="text-sm">
-                {connection.last_sync_at
-                  ? new Date(connection.last_sync_at).toLocaleString()
-                  : 'Never'}
-              </p>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold">
+                  {connection.total_transactions !== undefined 
+                    ? connection.total_transactions.toLocaleString()
+                    : '0'}
+                </p>
+                {connection.last_transaction_date && (
+                  <p className="text-xs text-muted-foreground">
+                    Latest: {new Date(connection.last_transaction_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
             </Card>
           </div>
+
+          {/* Sync Summary Card */}
+          {connection.sync_summary && (
+            <Card className="p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4">Last Sync Summary</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Accounts Synced</p>
+                  <p className="text-2xl font-bold">{connection.sync_summary.accounts_synced || 0}</p>
+                  {connection.sync_summary.accounts_created !== undefined && (
+                    <p className="text-xs text-green-600">+{connection.sync_summary.accounts_created} new</p>
+                  )}
+                </div>
+                {connection.sync_summary.transactions_synced !== undefined && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Transactions</p>
+                    <p className="text-2xl font-bold">{connection.sync_summary.transactions_synced.toLocaleString()}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="text-2xl font-bold">
+                    {connection.sync_summary.sync_duration_ms 
+                      ? formatDuration(connection.sync_summary.sync_duration_ms)
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Last Sync</p>
+                  <p className="text-sm font-medium">
+                    {connection.last_sync_at
+                      ? new Date(connection.last_sync_at).toLocaleString()
+                      : 'Never'}
+                  </p>
+                  {connection.last_successful_sync_at && (
+                    <p className="text-xs text-green-600">
+                      ✓ {new Date(connection.last_successful_sync_at).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {connection.sync_summary.errors && connection.sync_summary.errors.length > 0 && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm font-semibold text-red-800 mb-2">Errors:</p>
+                  <ul className="text-sm text-red-700 space-y-1">
+                    {connection.sync_summary.errors.map((error, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                        <span>{error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {connection.sync_summary.warnings && connection.sync_summary.warnings.length > 0 && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm font-semibold text-yellow-800 mb-2">Warnings:</p>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    {connection.sync_summary.warnings.map((warning, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                        <span>{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* OAuth Token Info */}
           {token && (

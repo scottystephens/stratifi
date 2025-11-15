@@ -9,8 +9,17 @@ import {
   updateConnection,
   createIngestionJob,
   updateIngestionJob,
-  createAccount,
 } from '@/lib/supabase';
+import {
+  batchCreateOrUpdateAccounts,
+  syncAccountClosures,
+} from '@/lib/services/account-service';
+import {
+  refreshConnectionMetadata,
+  recordSyncSuccess,
+  recordSyncFailure,
+  type SyncSummary,
+} from '@/lib/services/connection-metadata-service';
 
 export async function POST(
   req: NextRequest,
@@ -39,7 +48,11 @@ export async function POST(
       tenantId,
       syncAccounts = true,
       syncTransactions = true,
-      transactionLimit = 200,
+      transactionLimit = 500,
+      // Transaction sync options
+      transactionDaysBack = 90, // Default to last 90 days
+      transactionStartDate, // Optional: override with specific start date
+      transactionEndDate, // Optional: override with specific end date
     } = body;
 
     if (!connectionId || !tenantId) {
@@ -145,114 +158,75 @@ export async function POST(
         metadata: tokenData.provider_metadata,
       };
 
+      const syncStartTime = Date.now();
       let accountsSynced = 0;
+      let accountsCreated = 0;
+      let accountsUpdated = 0;
       let transactionsSynced = 0;
       const errors: string[] = [];
+      const warnings: string[] = [];
 
-      // Sync accounts
+      // Sync accounts using new account service
       if (syncAccounts) {
         try {
           const providerAccounts = await provider.fetchAccounts(credentials);
-          
-          for (const providerAccount of providerAccounts) {
-            try {
-              // Check if account already exists
-              const { data: existingAccount } = await supabase
-                .from('provider_accounts')
-                .select('*')
-                .eq('connection_id', connectionId)
-                .eq('provider_id', providerId)
-                .eq('external_account_id', providerAccount.externalAccountId)
-                .single();
+          console.log(`📦 Fetched ${providerAccounts.length} accounts from ${providerId}`);
 
-              if (existingAccount) {
-                // Update existing account
-                await supabase
-                  .from('provider_accounts')
-                  .update({
-                    account_name: providerAccount.accountName,
-                    currency: providerAccount.currency,
-                    balance: providerAccount.balance,
-                    iban: providerAccount.iban,
-                    status: providerAccount.status,
-                    last_synced_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', existingAccount.id);
+          // Batch create/update accounts
+          const batchResult = await batchCreateOrUpdateAccounts(
+            tenantId,
+            connectionId,
+            providerId,
+            providerAccounts,
+            user.id
+          );
 
-                // Update linked Stratifi account if exists
-                if (existingAccount.account_id) {
-                  await supabase
-                    .from('accounts')
-                    .update({
-                      current_balance: providerAccount.balance,
-                      account_status: providerAccount.status,
-                      last_synced_at: new Date().toISOString(),
-                    })
-                    .eq('id', existingAccount.account_id);
-                }
-              } else {
-                // Create new provider account
-                const { data: newProviderAccount } = await supabase
-                  .from('provider_accounts')
-                  .insert({
-                    tenant_id: tenantId,
-                    connection_id: connectionId,
-                    provider_id: providerId,
-                    external_account_id: providerAccount.externalAccountId,
-                    account_name: providerAccount.accountName,
-                    account_number: providerAccount.accountNumber,
-                    account_type: providerAccount.accountType,
-                    currency: providerAccount.currency,
-                    balance: providerAccount.balance,
-                    iban: providerAccount.iban,
-                    bic: providerAccount.bic,
-                    status: providerAccount.status,
-                    provider_metadata: providerAccount.metadata || {},
-                    last_synced_at: new Date().toISOString(),
-                  })
-                  .select()
-                  .single();
+          accountsSynced = batchResult.summary.total;
+          accountsCreated = batchResult.summary.created;
+          accountsUpdated = batchResult.summary.updated;
 
-                // Create corresponding Stratifi account
-                if (newProviderAccount) {
-                  const newAccount = await createAccount({
-                    tenant_id: tenantId,
-                    account_name: providerAccount.accountName,
-                    account_number: providerAccount.accountNumber || providerAccount.externalAccountId,
-                    account_type: providerAccount.accountType,
-                    account_status: providerAccount.status,
-                    bank_name: provider.config.displayName,
-                    currency: providerAccount.currency,
-                    current_balance: providerAccount.balance,
-                    external_account_id: providerAccount.externalAccountId,
-                    sync_enabled: true,
-                    last_synced_at: new Date().toISOString(),
-                    created_by: user.id,
-                  });
-
-                  // Link the accounts
-                  await supabase
-                    .from('provider_accounts')
-                    .update({ account_id: newAccount.id })
-                    .eq('id', newProviderAccount.id);
-                }
-              }
-
-              accountsSynced++;
-            } catch (accountError) {
-              console.error(`Error syncing account ${providerAccount.externalAccountId}:`, accountError);
-              errors.push(`Account ${providerAccount.accountName}: ${provider.getErrorMessage(accountError)}`);
-            }
+          // Record errors from batch operation
+          if (batchResult.failed.length > 0) {
+            errors.push(...batchResult.failed.map(f => 
+              `${f.account.accountName}: ${f.error}`
+            ));
           }
+
+          // Sync account closures (mark accounts as closed if they no longer exist)
+          const activeExternalIds = providerAccounts.map(a => a.externalAccountId);
+          const closedCount = await syncAccountClosures(
+            tenantId,
+            connectionId,
+            providerId,
+            activeExternalIds
+          );
+
+          if (closedCount > 0) {
+            warnings.push(`${closedCount} accounts marked as closed`);
+          }
+
+          console.log(`✅ Account sync: ${accountsCreated} created, ${accountsUpdated} updated, ${batchResult.summary.failed} failed`);
         } catch (accountsError) {
-          errors.push(`Failed to fetch accounts: ${provider.getErrorMessage(accountsError)}`);
+          const errorMsg = `Failed to fetch accounts: ${provider.getErrorMessage(accountsError)}`;
+          errors.push(errorMsg);
+          console.error('❌', errorMsg);
         }
       }
 
       // Sync transactions
       if (syncTransactions) {
         try {
+          // Calculate date range for transaction sync
+          const endDate = transactionEndDate 
+            ? new Date(transactionEndDate)
+            : new Date();
+          
+          const startDate = transactionStartDate
+            ? new Date(transactionStartDate)
+            : new Date(endDate.getTime() - (transactionDaysBack * 24 * 60 * 60 * 1000));
+
+          console.log(`📅 Syncing transactions from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
           const { data: providerAccounts } = await supabase
             .from('provider_accounts')
             .select('*')
@@ -266,7 +240,11 @@ export async function POST(
                 const transactions = await provider.fetchTransactions(
                   credentials,
                   providerAccount.external_account_id,
-                  { limit: transactionLimit }
+                  { 
+                    limit: transactionLimit,
+                    startDate,
+                    endDate,
+                  }
                 );
 
                 for (const transaction of transactions) {
@@ -342,48 +320,83 @@ export async function POST(
         }
       }
 
-      // Update ingestion job
+      // Calculate sync duration
+      const syncDuration = Date.now() - syncStartTime;
+      const completedAt = new Date().toISOString();
+
+      // Create comprehensive sync summary
+      const syncSummary: SyncSummary = {
+        accounts_synced: accountsSynced,
+        accounts_created: accountsCreated,
+        accounts_updated: accountsUpdated,
+        transactions_synced: transactionsSynced,
+        sync_duration_ms: syncDuration,
+        errors,
+        warnings,
+        started_at: new Date(syncStartTime).toISOString(),
+        completed_at: completedAt,
+      };
+
+      // Update ingestion job with detailed summary
       await updateIngestionJob(ingestionJob.id, {
         status: errors.length > 0 ? 'completed_with_errors' : 'completed',
         records_fetched: accountsSynced + transactionsSynced,
-        records_imported: transactionsSynced,
+        records_imported: accountsCreated + accountsUpdated + transactionsSynced,
         records_failed: errors.length,
-        completed_at: new Date().toISOString(),
-        summary: {
-          accounts_synced: accountsSynced,
-          transactions_synced: transactionsSynced,
-          errors: errors.length > 0 ? errors : undefined,
-        },
+        completed_at: completedAt,
+        summary: syncSummary,
       });
+
+      // Update connection metadata and health
+      await refreshConnectionMetadata(connectionId);
+      
+      // Record sync success/failure for health tracking
+      if (errors.length === 0) {
+        await recordSyncSuccess(connectionId);
+      } else if (accountsSynced === 0 && transactionsSynced === 0) {
+        // Complete failure
+        await recordSyncFailure(connectionId, errors.join('; '));
+      }
 
       // Update connection last_sync_at
       await updateConnection(tenantId, connectionId, {
-        last_sync_at: new Date().toISOString(),
+        last_sync_at: completedAt,
       });
 
       // Update token last_used_at
       await supabase
         .from('provider_tokens')
-        .update({ last_used_at: new Date().toISOString() })
+        .update({ last_used_at: completedAt })
         .eq('id', tokenData.id);
+
+      console.log(`✅ Sync completed in ${syncDuration}ms`);
 
       return NextResponse.json({
         success: true,
-        message: `Synced ${accountsSynced} accounts and ${transactionsSynced} transactions`,
+        message: `Synced ${accountsSynced} accounts (${accountsCreated} new, ${accountsUpdated} updated) and ${transactionsSynced} transactions`,
         summary: {
           accountsSynced,
+          accountsCreated,
+          accountsUpdated,
           transactionsSynced,
           errors: errors.length > 0 ? errors : undefined,
+          warnings: warnings.length > 0 ? warnings : undefined,
+          syncDurationMs: syncDuration,
         },
         jobId: ingestionJob.id,
       });
     } catch (error) {
       // Update job as failed
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       await updateIngestionJob(ingestionJob.id, {
         status: 'failed',
-        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_message: errorMessage,
         completed_at: new Date().toISOString(),
       });
+
+      // Record failure for health tracking
+      await recordSyncFailure(connectionId, errorMessage);
 
       throw error;
     }
