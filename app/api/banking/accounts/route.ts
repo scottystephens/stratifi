@@ -1,4 +1,4 @@
-// API endpoint to fetch ingestion jobs for a connection
+// API endpoint to fetch provider accounts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabase } from '@/lib/supabase';
@@ -38,29 +38,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get ingestion jobs
-    const { data: jobs, error } = await supabase
-      .from('ingestion_jobs')
+    // Get provider accounts
+    const { data: accounts, error } = await supabase
+      .from('provider_accounts')
       .select('*')
       .eq('connection_id', connectionId)
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching ingestion jobs:', error);
+      console.error('Error fetching provider accounts:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch ingestion jobs' },
+        { error: 'Failed to fetch provider accounts' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, jobs: jobs || [] });
+    return NextResponse.json({ success: true, accounts: accounts || [] });
   } catch (error) {
-    console.error('Error fetching ingestion jobs:', error);
+    console.error('Error fetching provider accounts:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch ingestion jobs' },
+      { error: 'Failed to fetch provider accounts' },
       { status: 500 }
     );
   }
 }
+

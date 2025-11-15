@@ -1,4 +1,4 @@
-// API endpoint to fetch ingestion jobs for a connection
+// API endpoint to fetch provider tokens
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabase } from '@/lib/supabase';
@@ -38,29 +38,33 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get ingestion jobs
-    const { data: jobs, error } = await supabase
-      .from('ingestion_jobs')
+    // Get provider token
+    const { data: token, error } = await supabase
+      .from('provider_tokens')
       .select('*')
       .eq('connection_id', connectionId)
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .single();
 
     if (error) {
-      console.error('Error fetching ingestion jobs:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch ingestion jobs' },
-        { status: 500 }
-      );
+      // No token found is not an error, just return null
+      return NextResponse.json({ success: true, token: null });
     }
 
-    return NextResponse.json({ success: true, jobs: jobs || [] });
+    // Remove sensitive data before returning
+    const sanitizedToken = {
+      ...token,
+      access_token: token.access_token ? '***' : null,
+      refresh_token: token.refresh_token ? '***' : null,
+    };
+
+    return NextResponse.json({ success: true, token: sanitizedToken });
   } catch (error) {
-    console.error('Error fetching ingestion jobs:', error);
+    console.error('Error fetching provider token:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch ingestion jobs' },
+      { error: 'Failed to fetch provider token' },
       { status: 500 }
     );
   }
 }
+
