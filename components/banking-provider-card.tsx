@@ -66,10 +66,48 @@ export function BankingProviderCard({
       // For Tink, open in popup window to force fresh session (no cached login)
       // This ensures users always see the login screen
       if (provider.id === 'tink') {
+        // Clear Tink-related cookies and localStorage before opening popup
+        // Tink uses cookies/localStorage to cache sessions
+        try {
+          // Clear localStorage for Tink domains (if accessible)
+          Object.keys(localStorage).forEach(key => {
+            if (key.toLowerCase().includes('tink')) {
+              localStorage.removeItem(key);
+            }
+          });
+          
+          // Clear sessionStorage
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.toLowerCase().includes('tink')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+          
+          // Clear cookies for Tink domains
+          const tinkDomains = ['link.tink.com', 'tink.com', '.tink.com', 'demobank.production.global.tink.se'];
+          tinkDomains.forEach(domain => {
+            document.cookie.split(';').forEach(cookie => {
+              const eqPos = cookie.indexOf('=');
+              const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+              if (name) {
+                // Try to clear cookie for various Tink domains and paths
+                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${domain}`;
+                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${domain}`;
+              }
+            });
+          });
+        } catch (e) {
+          console.warn('Could not clear Tink cookies/storage:', e);
+        }
+        
+        // Open popup with a fresh URL (add timestamp to prevent caching)
+        // Use incognito-like approach: open in new window with no referrer
+        const freshUrl = data.authorizationUrl + (data.authorizationUrl.includes('?') ? '&' : '?') + '_nocache=' + Date.now() + '&_force_login=1';
         const popup = window.open(
-          data.authorizationUrl,
+          freshUrl,
           'tink-oauth',
-          'width=600,height=700,scrollbars=yes,resizable=yes'
+          'width=600,height=700,scrollbars=yes,resizable=yes,noopener,noreferrer'
         );
         
         // Listen for popup to close or receive message

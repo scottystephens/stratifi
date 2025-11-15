@@ -142,7 +142,10 @@ export function getTinkAuthorizationUrl(state: string, market: string = 'NL'): s
     scope: 'accounts:read,transactions:read',
     state: state,
     market: market,
-    prompt: 'login', // Try to force login (may not be supported by Tink)
+    // Try multiple parameters to force login (Tink may not support these, but worth trying)
+    prompt: 'login',
+    login_hint: '', // Empty login hint might force fresh login
+    max_age: '0', // Force immediate re-authentication
     _t: timestamp.toString(), // Timestamp to prevent caching
     _n: nonce, // Nonce to make URL unique
   });
