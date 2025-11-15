@@ -3,6 +3,7 @@
 
 import { BankingProvider, ProviderMetadata } from './base-provider';
 import { bunqProvider } from './bunq-provider';
+import { tinkProvider } from './tink-provider';
 
 /**
  * Registry of all available banking providers
@@ -22,6 +23,18 @@ class ProviderRegistry {
         'BUNQ_CLIENT_ID',
         'BUNQ_CLIENT_SECRET',
         'BUNQ_REDIRECT_URI',
+      ],
+    });
+
+    this.registerProvider({
+      providerId: 'tink',
+      displayName: 'Tink (3,500+ European Banks)',
+      factory: () => tinkProvider,
+      enabled: true,
+      requiredEnvVars: [
+        'TINK_CLIENT_ID',
+        'TINK_CLIENT_SECRET',
+        'TINK_REDIRECT_URI',
       ],
     });
 
