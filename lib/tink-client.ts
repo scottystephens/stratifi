@@ -1,8 +1,6 @@
 // Tink API Client for Banking Aggregation
 // Documentation: https://docs.tink.com
 
-import crypto from 'crypto';
-
 // =====================================================
 // Types and Interfaces
 // =====================================================
@@ -119,22 +117,20 @@ export function validateTinkConfig(): boolean {
 
 /**
  * Generate OAuth authorization URL for user to grant access
+ * Following standard OAuth 2.0 Authorization Code Flow
+ * https://docs.tink.com/resources/tutorials/tink-link-web-permanent-users
  */
 export function getTinkAuthorizationUrl(state: string, market: string = 'NL'): string {
   if (!validateTinkConfig()) {
     throw new Error('Tink configuration is incomplete');
   }
   
-  // Log redirect URI for debugging
   console.log('🔗 Tink OAuth Configuration:');
-  console.log('   Redirect URI:', TINK_CONFIG.redirectUri);
-  console.log('   Redirect URI length:', TINK_CONFIG.redirectUri.length);
   console.log('   Client ID:', TINK_CONFIG.clientId);
+  console.log('   Redirect URI:', TINK_CONFIG.redirectUri);
+  console.log('   Market:', market);
   
-  // Add timestamp to make URL unique and prevent browser caching
-  const timestamp = Date.now();
-  const nonce = crypto.randomUUID();
-  
+  // Standard OAuth 2.0 parameters only - following industry best practices
   const params = new URLSearchParams({
     client_id: TINK_CONFIG.clientId,
     redirect_uri: TINK_CONFIG.redirectUri,
@@ -142,16 +138,10 @@ export function getTinkAuthorizationUrl(state: string, market: string = 'NL'): s
     scope: 'accounts:read,transactions:read',
     state: state,
     market: market,
-    // Try multiple parameters to force login (Tink may not support these, but worth trying)
-    prompt: 'login',
-    login_hint: '', // Empty login hint might force fresh login
-    max_age: '0', // Force immediate re-authentication
-    _t: timestamp.toString(), // Timestamp to prevent caching
-    _n: nonce, // Nonce to make URL unique
   });
   
   const authUrl = `${TINK_CONFIG.authorizeUrl}?${params.toString()}`;
-  console.log('   Authorization URL:', authUrl.substring(0, 200) + '...');
+  console.log('   Authorization URL:', authUrl);
   
   return authUrl;
 }

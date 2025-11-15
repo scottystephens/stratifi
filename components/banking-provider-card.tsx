@@ -63,76 +63,9 @@ export function BankingProviderCard({
         throw new Error(data.error || `Failed to connect to ${provider.displayName}`);
       }
 
-      // For Tink, open in popup window to force fresh session (no cached login)
-      // This ensures users always see the login screen
-      if (provider.id === 'tink') {
-        // Clear Tink-related cookies and localStorage before opening popup
-        // Tink uses cookies/localStorage to cache sessions
-        try {
-          // Clear localStorage for Tink domains (if accessible)
-          Object.keys(localStorage).forEach(key => {
-            if (key.toLowerCase().includes('tink')) {
-              localStorage.removeItem(key);
-            }
-          });
-          
-          // Clear sessionStorage
-          Object.keys(sessionStorage).forEach(key => {
-            if (key.toLowerCase().includes('tink')) {
-              sessionStorage.removeItem(key);
-            }
-          });
-          
-          // Clear cookies for Tink domains
-          const tinkDomains = ['link.tink.com', 'tink.com', '.tink.com', 'demobank.production.global.tink.se'];
-          tinkDomains.forEach(domain => {
-            document.cookie.split(';').forEach(cookie => {
-              const eqPos = cookie.indexOf('=');
-              const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-              if (name) {
-                // Try to clear cookie for various Tink domains and paths
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${domain}`;
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${domain}`;
-              }
-            });
-          });
-        } catch (e) {
-          console.warn('Could not clear Tink cookies/storage:', e);
-        }
-        
-        // Open popup with a fresh URL (add timestamp to prevent caching)
-        // Use incognito-like approach: open in new window with no referrer
-        const freshUrl = data.authorizationUrl + (data.authorizationUrl.includes('?') ? '&' : '?') + '_nocache=' + Date.now() + '&_force_login=1';
-        const popup = window.open(
-          freshUrl,
-          'tink-oauth',
-          'width=600,height=700,scrollbars=yes,resizable=yes,noopener,noreferrer'
-        );
-        
-        // Listen for popup to close or receive message
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            setIsConnecting(false);
-            // Reload page to show updated connection status
-            window.location.reload();
-          }
-        }, 500);
-        
-        // Listen for postMessage from callback (if implemented)
-        window.addEventListener('message', (event) => {
-          if (event.origin === window.location.origin && event.data === 'tink-oauth-success') {
-            popup?.close();
-            clearInterval(checkClosed);
-            setIsConnecting(false);
-            window.location.reload();
-          }
-        });
-      } else {
-        // For other providers, use standard redirect
-        window.location.href = data.authorizationUrl;
-      }
+      // Standard OAuth 2.0 redirect flow - no workarounds
+      // This is the industry-standard approach for all OAuth providers
+      window.location.href = data.authorizationUrl;
     } catch (error) {
       console.error('Provider connection error:', error);
       const errorMessage =

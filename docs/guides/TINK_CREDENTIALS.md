@@ -37,13 +37,24 @@ https://stratifi-pi.vercel.app/api/banking/tink/callback
 - ❌ `http://stratifi-pi.vercel.app/api/banking/tink/callback` (http instead of https)
 - ✅ `https://stratifi-pi.vercel.app/api/banking/tink/callback` (correct)
 
-## Next Steps
+## OAuth Flow
 
-1. ✅ Credentials saved
-2. ✅ Environment variables set in Vercel
-3. ⏳ Deploy code (in progress)
-4. ⏳ Test OAuth flow
-5. ⏳ Connect test bank account
+### Standard OAuth 2.0 Authorization Code Flow
+
+Tink uses the standard OAuth 2.0 Authorization Code Flow:
+
+1. **Authorization Request**: User is redirected to Tink's authorization endpoint
+2. **User Authentication**: User logs into their bank through Tink
+3. **Authorization Grant**: Tink redirects back with an authorization code
+4. **Token Exchange**: Your app exchanges the code for an access token
+5. **API Access**: Use the access token to fetch accounts and transactions
+
+### Important Notes
+
+- **No custom login forcing**: Tink manages user sessions server-side
+- **Standard redirect flow**: Use `window.location.href` for OAuth (no popups)
+- **Demo bank**: Use credentials `demo` / `demo` for testing
+- **Session management**: Tink handles login/logout - we cannot force re-authentication
 
 ---
 
