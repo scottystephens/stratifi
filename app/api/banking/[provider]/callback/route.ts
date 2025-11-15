@@ -115,9 +115,10 @@ export async function GET(
       });
 
       // Store OAuth tokens in generic provider_tokens table
+      // Use upsert to handle case where token already exists (e.g., reconnection)
       const { data: tokenData, error: tokenError } = await supabase
         .from('provider_tokens')
-        .insert({
+        .upsert({
           tenant_id: connection.tenant_id,
           connection_id: connection.id,
           provider_id: providerId,
@@ -129,6 +130,9 @@ export async function GET(
           provider_user_id: userInfo.userId,
           provider_metadata: userInfo.metadata || {},
           status: 'active',
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'connection_id,provider_id',
         })
         .select()
         .single();

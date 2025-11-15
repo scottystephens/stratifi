@@ -205,12 +205,39 @@ export class TinkProvider extends BankingProvider {
   // =====================================================
 
   getErrorMessage(error: any): string {
-    if (error.error_description) {
-      return error.error_description;
-    }
-    if (error.message) {
+    // Handle Error instances
+    if (error instanceof Error) {
       return error.message;
     }
+    
+    // Handle error objects with standard fields
+    if (error && typeof error === 'object') {
+      if (error.error_description) {
+        return String(error.error_description);
+      }
+      if (error.error) {
+        return String(error.error);
+      }
+      if (error.message) {
+        return String(error.message);
+      }
+      // Try to stringify the error object for debugging
+      try {
+        const stringified = JSON.stringify(error);
+        if (stringified !== '{}') {
+          return `Tink API error: ${stringified}`;
+        }
+      } catch {
+        // If stringification fails, use toString
+        return String(error);
+      }
+    }
+    
+    // Fallback for primitive types
+    if (error !== null && error !== undefined) {
+      return String(error);
+    }
+    
     return 'An unknown error occurred with Tink API';
   }
 
