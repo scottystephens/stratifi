@@ -315,6 +315,9 @@ async function bunqApiRequest<T>(
 ): Promise<T> {
   const url = `${BUNQ_CONFIG.apiBaseUrl}${endpoint}`;
   
+  // Bunq API requires POST for most endpoints, even for reading data
+  const method = options.method || 'POST';
+  
   const headers = {
     'Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
@@ -328,14 +331,23 @@ async function bunqApiRequest<T>(
   
   try {
     const response = await fetch(url, {
+      method,
       ...options,
       headers,
+      // For GET requests, don't send body; for POST, send empty body if not provided
+      body: method === 'GET' ? undefined : (options.body || JSON.stringify({})),
     });
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error_description: response.statusText }));
+      const errorText = await response.text();
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error_description: errorText };
+      }
       throw new Error(
-        `Bunq API error: ${error.error_description || response.statusText}`
+        `Bunq API error: ${error.error_description || error.error || response.statusText}`
       );
     }
     
