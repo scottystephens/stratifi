@@ -191,7 +191,51 @@ COMMENT ON COLUMN connections.sync_health_score IS 'Health score 0.00-1.00 based
 COMMENT ON COLUMN connections.sync_summary IS 'JSON summary of last sync: accounts, transactions, errors, warnings';
 
 -- =====================================================
--- PART 3: Add Indexes for Performance
+-- PART 3: Add Account Metadata Fields (BEFORE INDEXES!)
+-- =====================================================
+
+-- Provider linkage (if not already exists from migration 05)
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
+  provider_id TEXT;
+
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
+  connection_id UUID;
+
+-- IBAN field (if not exists)
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
+  iban VARCHAR(34);
+
+-- BIC/SWIFT field
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
+  bic VARCHAR(11);
+
+-- Account holder information
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
+  account_holder_name VARCHAR(255);
+
+-- Add foreign key for connection_id
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'accounts_connection_id_fkey'
+  ) THEN
+    ALTER TABLE accounts
+    ADD CONSTRAINT accounts_connection_id_fkey 
+    FOREIGN KEY (connection_id) REFERENCES connections(id) ON DELETE SET NULL;
+    RAISE NOTICE 'Added FK: accounts.connection_id -> connections.id';
+  END IF;
+END $$;
+
+-- Add comments
+COMMENT ON COLUMN accounts.provider_id IS 'Banking provider that syncs this account (e.g., tink, bunq)';
+COMMENT ON COLUMN accounts.connection_id IS 'Connection that manages this account';
+COMMENT ON COLUMN accounts.iban IS 'International Bank Account Number';
+COMMENT ON COLUMN accounts.bic IS 'Bank Identifier Code (SWIFT)';
+COMMENT ON COLUMN accounts.account_holder_name IS 'Name of the account holder';
+
+-- =====================================================
+-- PART 4: Add Indexes for Performance (AFTER COLUMNS EXIST!)
 -- =====================================================
 
 -- Index for account lookups by IBAN (deduplication)
@@ -223,50 +267,6 @@ CREATE INDEX IF NOT EXISTS idx_connections_health
 CREATE INDEX IF NOT EXISTS idx_connections_next_sync 
   ON connections(next_sync_at, status) 
   WHERE status = 'active' AND next_sync_at IS NOT NULL;
-
--- =====================================================
--- PART 4: Add Account Metadata Fields
--- =====================================================
-
--- Provider linkage (if not already exists from migration 05)
-ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
-  provider_id TEXT;
-
-ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
-  connection_id UUID;
-
--- Add foreign key for connection_id
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = 'accounts_connection_id_fkey'
-  ) THEN
-    ALTER TABLE accounts
-    ADD CONSTRAINT accounts_connection_id_fkey 
-    FOREIGN KEY (connection_id) REFERENCES connections(id) ON DELETE SET NULL;
-    RAISE NOTICE 'Added FK: accounts.connection_id -> connections.id';
-  END IF;
-END $$;
-
--- IBAN field (if not exists)
-ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
-  iban VARCHAR(34);
-
--- BIC/SWIFT field
-ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
-  bic VARCHAR(11);
-
--- Account holder information
-ALTER TABLE accounts ADD COLUMN IF NOT EXISTS 
-  account_holder_name VARCHAR(255);
-
--- Add comments
-COMMENT ON COLUMN accounts.provider_id IS 'Banking provider that syncs this account (e.g., tink, bunq)';
-COMMENT ON COLUMN accounts.connection_id IS 'Connection that manages this account';
-COMMENT ON COLUMN accounts.iban IS 'International Bank Account Number';
-COMMENT ON COLUMN accounts.bic IS 'Bank Identifier Code (SWIFT)';
-COMMENT ON COLUMN accounts.account_holder_name IS 'Name of the account holder';
 
 -- =====================================================
 -- PART 5: Create Helper Functions
