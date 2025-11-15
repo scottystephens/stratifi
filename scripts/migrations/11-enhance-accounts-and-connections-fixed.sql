@@ -344,7 +344,7 @@ DECLARE
   account_count INTEGER;
   active_count INTEGER;
   transaction_count INTEGER;
-  last_tx_date TIMESTAMPTZ;
+  last_tx_date DATE;
 BEGIN
   -- Count total and active accounts
   SELECT 
@@ -355,9 +355,10 @@ BEGIN
   WHERE connection_id = connection_uuid;
   
   -- Count transactions and get latest date
+  -- Note: transactions table uses 'date' column, not 'transaction_date'
   SELECT 
     COUNT(*),
-    MAX(transaction_date)
+    MAX(date)
   INTO transaction_count, last_tx_date
   FROM transactions
   WHERE connection_id = connection_uuid;
