@@ -106,13 +106,25 @@ export async function GET(
       console.log('Exchanging code for token...');
       const tokens = await provider.exchangeCodeForToken(code);
 
-      // Get user info from provider
-      console.log('Fetching user info...');
-      const userInfo = await provider.fetchUserInfo({
-        connectionId: connection.id,
-        tenantId: connection.tenant_id,
-        tokens,
-      });
+      // Try to get user info from provider (optional - some providers don't support it)
+      let userInfo: { userId: string; name: string; email?: string; metadata?: Record<string, any> } | null = null;
+      try {
+        console.log('Fetching user info...');
+        userInfo = await provider.fetchUserInfo({
+          connectionId: connection.id,
+          tenantId: connection.tenant_id,
+          tokens,
+        });
+        console.log('✅ User info fetched successfully');
+      } catch (userInfoError) {
+        console.warn('⚠️  Failed to fetch user info (non-blocking):', userInfoError instanceof Error ? userInfoError.message : userInfoError);
+        // Use connection ID as fallback user ID
+        userInfo = {
+          userId: connection.id,
+          name: connection.name || `${providerId}_user`,
+          metadata: { note: 'User info not available from provider' },
+        };
+      }
 
       // Store OAuth tokens in generic provider_tokens table
       // Use upsert to handle case where token already exists (e.g., reconnection)
