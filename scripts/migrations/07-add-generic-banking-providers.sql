@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS banking_providers (
 -- Seed with initial providers
 INSERT INTO banking_providers (id, display_name, auth_type, logo_url, color, description, website, supported_countries, enabled)
 VALUES 
-  ('bunq', 'Bunq', 'oauth', '/logos/bunq.svg', '#FF6B00', 'Connect your Bunq account for automatic transaction sync', 'https://www.bunq.com', ARRAY['NL', 'DE', 'FR', 'AT', 'IE', 'ES', 'IT', 'BE'], true)
+  ('bunq', 'Bunq', 'oauth', '/logos/bunq.svg', '#FF6B00', 'Connect your Bunq account for automatic transaction sync', 'https://www.bunq.com', ARRAY['NL', 'DE', 'FR', 'AT', 'IE', 'ES', 'IT', 'BE'], true),
+  ('tink', 'Tink', 'oauth', '/logos/tink.svg', '#00A8FF', 'Connect your bank accounts through Tink (3,500+ European banks)', 'https://www.tink.com', ARRAY['NL', 'GB', 'DE', 'FR', 'ES', 'IT', 'SE', 'NO', 'DK', 'FI', 'AT', 'BE', 'CH', 'IE', 'PT', 'PL', 'CZ', 'GR', 'RO', 'HU'], true)
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
