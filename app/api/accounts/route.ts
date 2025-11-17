@@ -158,27 +158,6 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Check if account has transactions
-    const { count: transactionCount, error: countError } = await supabase
-      .from('transactions')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('account_id', accountId);
-
-    if (countError) {
-      console.error('Error checking transactions:', countError);
-    }
-
-    if (transactionCount && transactionCount > 0) {
-      return NextResponse.json(
-        { 
-          error: `Cannot delete account: Account has ${transactionCount} transaction(s). Please delete or reassign transactions first.`,
-          transactionCount 
-        },
-        { status: 400 }
-      );
-    }
-
     // First, verify the account exists
     const { data: accountData, error: accountLookupError } = await supabase
       .from('accounts')
@@ -214,7 +193,34 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Delete using account_id field
+    // Get count of transactions before deletion
+    const { count: transactionCount } = await supabase
+      .from('transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId);
+
+    // Delete all transactions for this account first (required due to foreign key constraint)
+    const { error: deleteTransactionsError } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId);
+
+    if (deleteTransactionsError) {
+      console.error('Error deleting transactions:', deleteTransactionsError);
+      return NextResponse.json(
+        { 
+          error: `Failed to delete transactions: ${deleteTransactionsError.message}`,
+          details: deleteTransactionsError 
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log(`Deleted ${transactionCount || 0} transaction(s) for account ${accountId}`);
+
+    // Now delete the account
     const { error } = await supabase
       .from('accounts')
       .delete()
@@ -239,7 +245,8 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Account deleted successfully',
+      message: `Account deleted successfully${transactionCount ? ` (${transactionCount} transaction(s) also deleted)` : ''}`,
+      transactionsDeleted: transactionCount || 0,
     });
   } catch (error) {
     console.error('Delete account error:', error);
