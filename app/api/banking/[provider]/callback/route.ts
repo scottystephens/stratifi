@@ -13,6 +13,10 @@ import {
 import { performSync } from '@/lib/services/sync-service';
 import { recordSyncFailure } from '@/lib/services/connection-metadata-service';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { provider: string } }
@@ -218,66 +222,63 @@ export async function GET(
         .eq('id', connection.id);
 
       // Automatically sync accounts and transactions after successful OAuth
-      // Use the shared sync service directly (avoids internal HTTP calls which don't work in serverless)
-      // This runs in the background and won't block the redirect
-      (async () => {
-        try {
-          console.log('🔄 Starting automatic sync after OAuth...');
-          
-          // Small delay to ensure token is fully committed
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Call sync service directly (pass existing job ID)
-          const syncResult = await performSync({
-            connectionId: connection.id,
-            tenantId: connection.tenant_id,
-            providerId: providerId,
-            userId: user.id,
-            syncAccounts: true,
-            syncTransactions: true,
-            forceSync: true, // Force initial sync to get full history
-            transactionDaysBack: 90, // Initial sync: get last 90 days
-            jobId: ingestionJob.id, // Use the job created earlier for tracking
-          });
+      // Run inline so we can guarantee completion before redirecting (Lambda may terminate background tasks)
+      let syncWarning: string | null = null;
 
-          if (!syncResult.success) {
-            console.error('❌ OAuth sync failed:', syncResult.error);
-            // Job is already updated by performSync
-            return;
-          }
+      try {
+        console.log('🔄 Starting automatic sync after OAuth (inline)...');
+        const syncResult = await performSync({
+          connectionId: connection.id,
+          tenantId: connection.tenant_id,
+          providerId: providerId,
+          userId: user.id,
+          syncAccounts: true,
+          syncTransactions: true,
+          forceSync: true, // Force initial sync to get full history
+          transactionDaysBack: 90, // Initial sync: get last 90 days
+          jobId: ingestionJob.id, // Use the job created earlier for tracking
+        });
 
+        if (!syncResult.success) {
+          syncWarning = syncResult.error || 'Sync completed with errors. Please try again.';
+          console.error('❌ OAuth sync completed with warnings:', syncWarning);
+        } else {
           console.log(`✅ OAuth sync completed:`, {
             accountsSynced: syncResult.summary?.accountsSynced || 0,
             transactionsSynced: syncResult.summary?.transactionsSynced || 0,
             jobId: syncResult.jobId,
           });
-        } catch (syncError) {
-          console.error('❌ Automatic sync error:', syncError);
-          
-          // Format error message
-          const errorMessage = syncError instanceof Error 
-            ? syncError.message 
-            : String(syncError);
-          
-          // Update job as failed
-          await updateIngestionJob(ingestionJob.id, {
-            status: 'failed',
-            error_message: errorMessage,
-            completed_at: new Date().toISOString(),
-          });
-
-          // Record failure for health tracking
-          await recordSyncFailure(connection.id, errorMessage);
         }
-      })();
+      } catch (syncError) {
+        console.error('❌ Automatic sync error:', syncError);
+        syncWarning = syncError instanceof Error ? syncError.message : String(syncError);
 
-      // Redirect to connection details page with sync status
-      return NextResponse.redirect(
-        new URL(
-          `/connections/${connection.id}?success=true&message=Successfully connected to ${provider.config.displayName}&syncing=true&jobId=${ingestionJob.id}`,
-          req.url
-        )
+        // Ensure job is marked as failed
+        await updateIngestionJob(ingestionJob.id, {
+          status: 'failed',
+          error_message: syncWarning,
+          completed_at: new Date().toISOString(),
+        });
+
+        await recordSyncFailure(connection.id, syncWarning);
+      }
+
+      // Redirect to connection details page after sync completes
+      const redirectUrl = new URL(
+        `/connections/${connection.id}`,
+        req.url
       );
+      redirectUrl.searchParams.set('success', 'true');
+      redirectUrl.searchParams.set('message', `Successfully connected to ${provider.config.displayName}`);
+      redirectUrl.searchParams.set('syncing', 'false');
+
+      if (syncWarning) {
+        redirectUrl.searchParams.set('warning', syncWarning);
+      } else {
+        redirectUrl.searchParams.set('synced', 'true');
+      }
+
+      return NextResponse.redirect(redirectUrl);
     } catch (tokenError) {
       console.error('Error during token exchange or user info fetch:', tokenError);
 
