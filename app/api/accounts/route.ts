@@ -158,6 +158,62 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    // Check if account has transactions
+    const { count: transactionCount, error: countError } = await supabase
+      .from('transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId);
+
+    if (countError) {
+      console.error('Error checking transactions:', countError);
+    }
+
+    if (transactionCount && transactionCount > 0) {
+      return NextResponse.json(
+        { 
+          error: `Cannot delete account: Account has ${transactionCount} transaction(s). Please delete or reassign transactions first.`,
+          transactionCount 
+        },
+        { status: 400 }
+      );
+    }
+
+    // First, verify the account exists
+    const { data: accountData, error: accountLookupError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId)
+      .single();
+
+    if (accountLookupError || !accountData) {
+      return NextResponse.json(
+        { error: 'Account not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if account has provider accounts linked (using UUID id)
+    const { count: providerAccountCount, error: providerCountError } = await supabase
+      .from('provider_accounts')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', accountData.id); // Use UUID id, not TEXT account_id
+
+    if (providerCountError) {
+      console.error('Error checking provider accounts:', providerCountError);
+    }
+
+    if (providerAccountCount > 0) {
+      return NextResponse.json(
+        { 
+          error: `Cannot delete account: Account is linked to ${providerAccountCount} provider account(s). Please disconnect the account from the banking provider first.`,
+          providerAccountCount 
+        },
+        { status: 400 }
+      );
+    }
+
     // Delete using account_id field
     const { error } = await supabase
       .from('accounts')
@@ -166,6 +222,18 @@ export async function DELETE(req: NextRequest) {
       .eq('account_id', accountId);
 
     if (error) {
+      // Check for foreign key constraint violation
+      if (error.code === '23503') {
+        return NextResponse.json(
+          { 
+            error: 'Cannot delete account: Account is referenced by other records (transactions, provider accounts, etc.). Please remove these references first.',
+            details: error.message 
+          },
+          { status: 400 }
+        );
+      }
+      
+      console.error('Delete account error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
