@@ -13,6 +13,21 @@ export const transactionKeys = {
 };
 
 export interface Transaction {
+  transaction_id: string;
+  account_id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  description: string;
+  type: string;
+  category?: string;
+  reference?: string;
+  counterparty_name?: string;
+  counterparty_account?: string;
+  merchant_name?: string;
+  metadata?: any;
+}
+
 export interface TransactionsResponse {
   transactions: Transaction[];
   page: number;
