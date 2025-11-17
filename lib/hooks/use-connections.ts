@@ -119,13 +119,29 @@ export function useSyncConnection() {
       return data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate connection details
+      // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({
         queryKey: connectionKeys.detail(variables.tenantId, variables.connectionId),
       });
       // Invalidate accounts list (new accounts might have been created)
       queryClient.invalidateQueries({
         queryKey: ['accounts', 'list', variables.tenantId],
+      });
+      // Invalidate transactions for all accounts (new transactions might have been imported)
+      queryClient.invalidateQueries({
+        queryKey: ['transactions'],
+      });
+      // Invalidate dashboard data
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
+      });
+      
+      // Refetch immediately to update UI
+      queryClient.refetchQueries({
+        queryKey: ['accounts', 'list', variables.tenantId],
+      });
+      queryClient.refetchQueries({
+        queryKey: connectionKeys.detail(variables.tenantId, variables.connectionId),
       });
       
       const accountsCount = data.summary?.accountsSynced || 0;

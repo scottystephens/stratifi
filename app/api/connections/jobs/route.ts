@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const connectionId = searchParams.get('connectionId');
     const tenantId = searchParams.get('tenantId');
+    const jobId = searchParams.get('jobId'); // Optional: filter by specific job ID
 
     if (!connectionId || !tenantId) {
       return NextResponse.json(
@@ -38,14 +39,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get ingestion jobs
-    const { data: jobs, error } = await supabase
+    // Build query
+    let query = supabase
       .from('ingestion_jobs')
       .select('*')
       .eq('connection_id', connectionId)
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', tenantId);
+
+    // Filter by job ID if provided
+    if (jobId) {
+      query = query.eq('id', jobId);
+    }
+
+    // Get ingestion jobs
+    const { data: jobs, error } = await query
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(jobId ? 1 : 50); // If filtering by jobId, only need 1 result
 
     if (error) {
       console.error('Error fetching ingestion jobs:', error);

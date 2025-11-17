@@ -10,21 +10,8 @@ import {
   createIngestionJob,
   updateIngestionJob,
 } from '@/lib/supabase';
-import {
-  batchCreateOrUpdateAccounts,
-  syncAccountClosures,
-} from '@/lib/services/account-service';
-import {
-  refreshConnectionMetadata,
-  recordSyncSuccess,
-  recordSyncFailure,
-  type SyncSummary,
-} from '@/lib/services/connection-metadata-service';
-import {
-  determineSyncDateRange,
-  calculateSyncMetrics,
-  formatSyncMetrics,
-} from '@/lib/services/transaction-sync-service';
+import { performSync } from '@/lib/services/sync-service';
+import { recordSyncFailure } from '@/lib/services/connection-metadata-service';
 
 export async function GET(
   req: NextRequest,
@@ -204,7 +191,15 @@ export async function GET(
         hasRefreshToken: !!tokenData.refresh_token,
       });
 
-      // Update connection status
+      // Create ingestion job for tracking sync progress
+      const ingestionJob = await createIngestionJob({
+        tenant_id: connection.tenant_id,
+        connection_id: connection.id,
+        job_type: `${providerId}_oauth_sync`,
+        status: 'running',
+      });
+
+      // Update connection status and store job ID for UI polling
       await updateConnection(connection.tenant_id, connection.id, {
         status: 'active',
         config: {
@@ -212,6 +207,7 @@ export async function GET(
           provider_user_id: userInfo.userId,
           provider_user_name: userInfo.name,
           connected_at: new Date().toISOString(),
+          sync_job_id: ingestionJob.id, // Store job ID for UI polling
         },
       });
 
@@ -222,287 +218,63 @@ export async function GET(
         .eq('id', connection.id);
 
       // Automatically sync accounts and transactions after successful OAuth
+      // Use the shared sync service directly (avoids internal HTTP calls which don't work in serverless)
       // This runs in the background and won't block the redirect
-      // Use the tokenData we just inserted to avoid race conditions
       (async () => {
-        const syncStartTime = Date.now();
-        const syncSummary: SyncSummary = {
-          accounts_synced: 0,
-          accounts_created: 0,
-          accounts_updated: 0,
-          sync_duration_ms: 0,
-          errors: [],
-          warnings: [],
-          started_at: new Date().toISOString(),
-          completed_at: '',
-        };
-
         try {
           console.log('🔄 Starting automatic sync after OAuth...');
           
           // Small delay to ensure token is fully committed
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Create ingestion job
-          const ingestionJob = await createIngestionJob({
-            tenant_id: connection.tenant_id,
-            connection_id: connection.id,
-            job_type: `${providerId}_oauth_sync`,
-            status: 'running',
+          // Call sync service directly (pass existing job ID)
+          const syncResult = await performSync({
+            connectionId: connection.id,
+            tenantId: connection.tenant_id,
+            providerId: providerId,
+            userId: user.id,
+            syncAccounts: true,
+            syncTransactions: true,
+            forceSync: true, // Force initial sync to get full history
+            transactionDaysBack: 90, // Initial sync: get last 90 days
+            jobId: ingestionJob.id, // Use the job created earlier for tracking
           });
 
-          // Use the tokenData we just inserted (avoid race condition)
-          if (tokenData) {
-            const credentials = {
-              connectionId: connection.id,
-              tenantId: connection.tenant_id,
-              tokens: {
-                accessToken: tokenData.access_token,
-                refreshToken: tokenData.refresh_token || undefined,
-                expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at) : undefined,
-                tokenType: tokenData.token_type || 'Bearer',
-                scope: tokenData.scopes,
-              },
-              metadata: tokenData.provider_metadata,
-            };
-
-            // Fetch and sync accounts using new service
-            try {
-              const providerAccounts = await provider.fetchAccounts(credentials);
-              console.log(`📦 Fetched ${providerAccounts.length} accounts from ${providerId}`);
-
-              // Batch create/update accounts
-              const batchResult = await batchCreateOrUpdateAccounts(
-                connection.tenant_id,
-                connection.id,
-                providerId,
-                providerAccounts,
-                user.id
-              );
-
-              syncSummary.accounts_synced = batchResult.summary.total;
-              syncSummary.accounts_created = batchResult.summary.created;
-              syncSummary.accounts_updated = batchResult.summary.updated;
-
-              // Record errors from batch operation
-              if (batchResult.failed.length > 0) {
-                syncSummary.errors = batchResult.failed.map(f => 
-                  `${f.account.accountName}: ${f.error}`
-                );
-              }
-
-              // Sync account closures (mark accounts as closed if they no longer exist)
-              const activeExternalIds = providerAccounts.map(a => a.externalAccountId);
-              const closedCount = await syncAccountClosures(
-                connection.tenant_id,
-                connection.id,
-                providerId,
-                activeExternalIds
-              );
-
-              if (closedCount > 0) {
-                syncSummary.warnings.push(`${closedCount} accounts marked as closed`);
-              }
-
-              // Optional: Sync initial transactions using intelligent sync
-              // Only if provider supports transactions
-              if (provider.config.supportsSync) {
-                try {
-                  console.log('💳 Starting initial transaction sync...');
-                  
-                  let transactionsCount = 0;
-
-                  // Fetch transactions for successful accounts
-                  for (const result of batchResult.successful) {
-                    if (!result.account) continue;
-
-                    try {
-                      const { data: providerAccount } = await supabase
-                        .from('provider_accounts')
-                        .select('*')
-                        .eq('account_id', result.account.id)
-                        .eq('connection_id', connection.id)
-                        .single();
-
-                      if (!providerAccount) continue;
-
-                      // Use intelligent sync for initial backfill
-                      const dateRange = await determineSyncDateRange(
-                        result.account.account_id,
-                        connection.id,
-                        result.account.account_type || 'checking',
-                        true // Force initial sync
-                      );
-
-                      const metrics = calculateSyncMetrics(dateRange);
-                      console.log(`  📊 ${result.account.account_name}: ${formatSyncMetrics(metrics)}`);
-
-                      const transactions = await provider.fetchTransactions(
-                        credentials,
-                        providerAccount.external_account_id,
-                        { 
-                          startDate: dateRange.startDate, 
-                          endDate: dateRange.endDate, 
-                          limit: 500, // Higher limit for initial sync
-                        }
-                      );
-
-                      // Import transactions
-                      for (const transaction of transactions) {
-                        try {
-                          // Generate consistent transaction_id
-                          const transactionId = `${providerId}_${connection.id}_${transaction.externalTransactionId}`;
-                          
-                          // ✨ STEP 1: Store in provider_transactions with complete metadata
-                          const { data: providerTxData } = await supabase
-                            .from('provider_transactions')
-                            .upsert({
-                              tenant_id: connection.tenant_id,
-                              connection_id: connection.id,
-                              provider_id: providerId,
-                              provider_account_id: providerAccount.id,
-                              external_transaction_id: transaction.externalTransactionId,
-                              external_account_id: providerAccount.external_account_id,
-                              amount: transaction.amount,
-                              currency: transaction.currency,
-                              description: transaction.description,
-                              transaction_type: transaction.type,
-                              counterparty_name: transaction.counterpartyName,
-                              transaction_date: transaction.date.toISOString(),
-                              import_status: 'pending',
-                              import_job_id: ingestionJob.id,
-                              // ✨ Store COMPLETE metadata
-                              provider_metadata: transaction.metadata || {},
-                              // ✨ Link to main transaction
-                              transaction_id: transactionId,
-                            }, {
-                              onConflict: 'connection_id,provider_id,external_transaction_id',
-                            })
-                            .select()
-                            .single();
-
-                          // ✨ STEP 2: Import to main transactions table
-                          const { data: mainTxData } = await supabase
-                            .from('transactions')
-                            .upsert({
-                              transaction_id: transactionId,
-                              tenant_id: connection.tenant_id,
-                              account_id: result.account.account_id, // Use TEXT account_id, not UUID id
-                              date: transaction.date.toISOString().split('T')[0], // Use 'date' column, format as YYYY-MM-DD
-                              amount: transaction.type === 'credit' ? transaction.amount : -transaction.amount,
-                              currency: transaction.currency,
-                              description: transaction.description,
-                              type: transaction.type === 'credit' ? 'Credit' : 'Debit', // Use 'type' column, not 'transaction_type'
-                              category: transaction.category || 'Uncategorized',
-                              status: 'Completed',
-                              connection_id: connection.id,
-                              external_transaction_id: transaction.externalTransactionId,
-                              source_type: `${providerId}_api`,
-                              import_job_id: ingestionJob.id,
-                              metadata: {
-                                counterparty_name: transaction.counterpartyName,
-                                counterparty_account: transaction.counterpartyAccount,
-                                reference: transaction.reference,
-                                provider_id: providerId,
-                                ...transaction.metadata,
-                              },
-                            }, {
-                              onConflict: 'transaction_id',
-                            })
-                            .select()
-                            .single();
-
-                          // ✨ STEP 3: Update provider_transactions to mark as imported
-                          if (mainTxData && providerTxData) {
-                            await supabase
-                              .from('provider_transactions')
-                              .update({
-                                import_status: 'imported',
-                                transaction_id: mainTxData.transaction_id,
-                              })
-                              .eq('id', providerTxData.id);
-                          }
-
-                          transactionsCount++;
-                        } catch (txError) {
-                          console.error('Error importing transaction:', txError);
-                        }
-                      }
-                    } catch (accountTxError) {
-                      // Log but don't fail the entire sync
-                      console.warn(`Failed to sync transactions for account:`, accountTxError);
-                    }
-                  }
-
-                  syncSummary.transactions_synced = transactionsCount;
-                  console.log(`✅ Initial transaction sync: ${transactionsCount} transactions imported`);
-                } catch (txSyncError) {
-                  // Transaction sync is optional - log warning but don't fail
-                  const warningMsg = `Transaction sync skipped: ${txSyncError instanceof Error ? txSyncError.message : 'Unknown error'}`;
-                  syncSummary.warnings.push(warningMsg);
-                  console.warn(`⚠️  ${warningMsg}`);
-                }
-              }
-
-              // Calculate sync duration
-              syncSummary.sync_duration_ms = Date.now() - syncStartTime;
-              syncSummary.completed_at = new Date().toISOString();
-
-              // Update job with results
-              await updateIngestionJob(ingestionJob.id, {
-                status: syncSummary.errors.length > 0 ? 'completed_with_errors' : 'completed',
-                records_fetched: batchResult.summary.total,
-                records_imported: batchResult.summary.created + batchResult.summary.updated,
-                records_failed: batchResult.summary.failed,
-                completed_at: syncSummary.completed_at,
-                summary: syncSummary,
-              });
-
-              // Update connection metadata and health
-              await refreshConnectionMetadata(connection.id);
-              
-              if (syncSummary.errors.length === 0) {
-                await recordSyncSuccess(connection.id);
-              }
-
-              console.log(`✅ OAuth sync completed: ${batchResult.summary.created} created, ${batchResult.summary.updated} updated, ${batchResult.summary.failed} failed`);
-            } catch (syncError) {
-              console.error('❌ Automatic sync error:', syncError);
-              
-              // Format error message
-              const errorMessage = syncError instanceof Error 
-                ? syncError.message 
-                : String(syncError);
-              
-              syncSummary.errors.push(errorMessage);
-              syncSummary.completed_at = new Date().toISOString();
-              syncSummary.sync_duration_ms = Date.now() - syncStartTime;
-              
-              await updateIngestionJob(ingestionJob.id, {
-                status: 'failed',
-                error_message: errorMessage,
-                completed_at: syncSummary.completed_at,
-                summary: syncSummary,
-              });
-
-              // Record failure for health tracking
-              await recordSyncFailure(connection.id, errorMessage);
-            }
-          } else {
-            const errorMsg = 'Token data not available for automatic sync';
-            console.warn(`⚠️  ${errorMsg}`);
-            syncSummary.errors.push(errorMsg);
+          if (!syncResult.success) {
+            console.error('❌ OAuth sync failed:', syncResult.error);
+            // Job is already updated by performSync
+            return;
           }
-        } catch (outerError) {
-          // Don't fail the OAuth flow if sync fails - user can sync manually later
-          console.error('Automatic sync error (non-blocking):', outerError);
+
+          console.log(`✅ OAuth sync completed:`, {
+            accountsSynced: syncResult.summary?.accountsSynced || 0,
+            transactionsSynced: syncResult.summary?.transactionsSynced || 0,
+            jobId: syncResult.jobId,
+          });
+        } catch (syncError) {
+          console.error('❌ Automatic sync error:', syncError);
+          
+          // Format error message
+          const errorMessage = syncError instanceof Error 
+            ? syncError.message 
+            : String(syncError);
+          
+          // Update job as failed
+          await updateIngestionJob(ingestionJob.id, {
+            status: 'failed',
+            error_message: errorMessage,
+            completed_at: new Date().toISOString(),
+          });
+
+          // Record failure for health tracking
+          await recordSyncFailure(connection.id, errorMessage);
         }
       })();
 
-      // Redirect to connection details page
+      // Redirect to connection details page with sync status
       return NextResponse.redirect(
         new URL(
-          `/connections/${connection.id}?success=true&message=Successfully connected to ${provider.config.displayName}`,
+          `/connections/${connection.id}?success=true&message=Successfully connected to ${provider.config.displayName}&syncing=true&jobId=${ingestionJob.id}`,
           req.url
         )
       );

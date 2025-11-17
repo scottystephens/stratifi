@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/lib/tenant-context';
 import { Navigation } from '@/components/navigation';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, RefreshCw, Trash2, CheckCircle2, AlertCircle, Clock, Building2, CreditCard, TrendingUp, Activity, Zap, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useConnection, useSyncConnection, useDeleteConnection } from '@/lib/hooks/use-connections';
+import { useAccounts } from '@/lib/hooks/use-accounts';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Connection {
   id: string;
@@ -96,19 +98,118 @@ interface IngestionJob {
 export default function ConnectionDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
+  const queryClient = useQueryClient();
   const [token, setToken] = useState<ProviderToken | null>(null);
   const [accounts, setAccounts] = useState<ProviderAccount[]>([]);
   const [jobs, setJobs] = useState<IngestionJob[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncJobId, setSyncJobId] = useState<string | null>(null);
 
   const connectionId = params.id as string;
+  const syncingParam = searchParams.get('syncing') === 'true';
+  const jobIdParam = searchParams.get('jobId');
 
-  // Use React Query for connection data
+  // Use React Query for connection data and accounts
   const { data: connection, isLoading: loading } = useConnection(currentTenant?.id, connectionId);
+  const { data: tenantAccounts = [] } = useAccounts(currentTenant?.id);
   const syncMutation = useSyncConnection();
   const deleteMutation = useDeleteConnection();
 
-  // Load additional data (token, accounts, jobs) - these can be cached separately
+  // Initialize sync polling if redirected from OAuth
+  useEffect(() => {
+    if (syncingParam && jobIdParam) {
+      setIsSyncing(true);
+      setSyncJobId(jobIdParam);
+      // Remove syncing param from URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('syncing');
+      newUrl.searchParams.delete('jobId');
+      router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+    }
+  }, [syncingParam, jobIdParam, router]);
+
+  // Poll for sync completion when syncing and refresh data
+  useEffect(() => {
+    if (!isSyncing || !syncJobId || !currentTenant) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        // Check job status
+        const jobResponse = await fetch(`/api/connections/jobs?connectionId=${connectionId}&tenantId=${currentTenant.id}&jobId=${syncJobId}`);
+        const jobData = await jobResponse.json();
+        
+        if (jobData.success && jobData.jobs?.length > 0) {
+          const job = jobData.jobs[0];
+          
+          // Check if job is complete
+          if (job.status === 'completed' || job.status === 'completed_with_errors' || job.status === 'failed') {
+            setIsSyncing(false);
+            clearInterval(pollInterval);
+            
+            // Invalidate all related queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+            queryClient.invalidateQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            
+            // Refetch immediately to update UI
+            queryClient.refetchQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+            queryClient.refetchQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+            
+            // Refresh provider accounts and jobs
+            fetch(`/api/banking/accounts?connectionId=${connectionId}&tenantId=${currentTenant.id}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  setAccounts(data.accounts || []);
+                }
+              })
+              .catch(console.error);
+            
+            fetch(`/api/connections/jobs?connectionId=${connectionId}&tenantId=${currentTenant.id}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  setJobs(data.jobs || []);
+                }
+              })
+              .catch(console.error);
+            
+            // Show success message
+            const accountsCount = job.summary?.accounts_synced || 0;
+            const transactionsCount = job.summary?.transactions_synced || 0;
+            toast.success('Sync complete!', {
+              description: `${accountsCount} accounts synced, ${transactionsCount} transactions imported`,
+            });
+          } else {
+            // Job still running - refresh accounts and connection data to show progress
+            queryClient.refetchQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+            queryClient.refetchQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+          }
+        }
+      } catch (error) {
+        console.error('Error polling sync status:', error);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    // Cleanup after 5 minutes (max sync time)
+    const timeout = setTimeout(() => {
+      setIsSyncing(false);
+      clearInterval(pollInterval);
+      toast.warning('Sync is taking longer than expected', {
+        description: 'You can check the sync status manually',
+      });
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeout);
+    };
+  }, [isSyncing, syncJobId, connectionId, currentTenant, queryClient]);
+
+  // Load additional data (token, provider accounts, jobs) - these can be cached separately
   useEffect(() => {
     if (!currentTenant || !connectionId) return;
 
@@ -122,7 +223,7 @@ export default function ConnectionDetailPage() {
       })
       .catch(console.error);
 
-    // Load provider accounts
+    // Load provider accounts (from provider_accounts table)
     fetch(`/api/banking/accounts?connectionId=${connectionId}&tenantId=${currentTenant.id}`)
       .then(res => res.json())
       .then(data => {
@@ -142,6 +243,9 @@ export default function ConnectionDetailPage() {
       })
       .catch(console.error);
   }, [currentTenant, connectionId]);
+
+  // Filter accounts for this connection
+  const connectionAccounts = tenantAccounts.filter(acc => acc.connection_id === connectionId);
 
   async function handleSync() {
     if (!currentTenant || !connection || !connection.provider) return;
@@ -348,9 +452,19 @@ export default function ConnectionDetailPage() {
                 <h3 className="font-semibold">Accounts</h3>
               </div>
               <div className="space-y-1">
-                <p className="text-3xl font-bold">{connection.total_accounts || accounts.length}</p>
+                <p className="text-3xl font-bold">
+                  {isSyncing ? (
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+                  ) : (
+                    connection.total_accounts || connectionAccounts.length
+                  )}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {connection.active_accounts || accounts.filter(a => a.status === 'active').length} active
+                  {isSyncing ? (
+                    'Syncing accounts...'
+                  ) : (
+                    `${connection.active_accounts || connectionAccounts.filter(a => a.account_status === 'active').length} active`
+                  )}
                 </p>
               </div>
             </Card>
@@ -490,27 +604,49 @@ export default function ConnectionDetailPage() {
 
           {/* Provider Accounts */}
           <Card className="p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Connected Accounts</h2>
-            {accounts.length === 0 ? (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Connected Accounts</h2>
+              {isSyncing && (
+                <Badge variant="outline" className="flex items-center gap-2">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  Syncing...
+                </Badge>
+              )}
+            </div>
+            {isSyncing && connectionAccounts.length === 0 ? (
+              <div className="text-center py-8">
+                <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                <p className="text-muted-foreground">Syncing accounts and transactions...</p>
+                <p className="text-sm text-muted-foreground mt-1">This may take a few moments</p>
+              </div>
+            ) : connectionAccounts.length === 0 && accounts.length === 0 ? (
               <p className="text-muted-foreground">No accounts synced yet. Click &quot;Sync Now&quot; to fetch accounts.</p>
             ) : (
               <div className="space-y-4">
-                {accounts.map((account) => (
-                  <div key={account.id} className="border rounded-lg p-4">
+                {(connectionAccounts.length > 0 ? connectionAccounts : accounts).map((account: any) => {
+                  // Handle both account types (from accounts table or provider_accounts)
+                  const accountName = account.account_name || account.name;
+                  const accountType = account.account_type || account.type;
+                  const balance = account.current_balance ?? account.balance ?? 0;
+                  const currency = account.currency || 'EUR';
+                  const status = account.account_status || account.status || 'active';
+                  
+                  return (
+                  <div key={account.id || account.account_id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-semibold">{account.account_name}</h3>
-                        <p className="text-sm text-muted-foreground">{account.account_type}</p>
+                        <h3 className="font-semibold">{accountName}</h3>
+                        <p className="text-sm text-muted-foreground">{accountType}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-bold">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',
-                            currency: account.currency,
-                          }).format(account.balance)}
+                            currency: currency,
+                          }).format(balance)}
                         </p>
-                        <Badge className={getStatusColor(account.status)} variant="outline">
-                          {account.status}
+                        <Badge className={getStatusColor(status)} variant="outline">
+                          {status}
                         </Badge>
                       </div>
                     </div>
@@ -525,16 +661,21 @@ export default function ConnectionDetailPage() {
                           <span className="text-muted-foreground">Account #:</span> {account.account_number}
                         </div>
                       )}
-                      <div>
-                        <span className="text-muted-foreground">External ID:</span> {account.external_account_id}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Last Synced:</span>{' '}
-                        {account.last_synced_at ? new Date(account.last_synced_at).toLocaleDateString() : 'Never'}
-                      </div>
+                      {account.external_account_id && (
+                        <div>
+                          <span className="text-muted-foreground">External ID:</span> {account.external_account_id}
+                        </div>
+                      )}
+                      {account.last_synced_at && (
+                        <div>
+                          <span className="text-muted-foreground">Last Synced:</span>{' '}
+                          {new Date(account.last_synced_at).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
