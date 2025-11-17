@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     if (statsError) throw statsError;
 
-    // Calculate health summary
+    // Calculate connection health summary
     const totalConnections = connectionStats?.length || 0;
     const healthyConnections =
       connectionStats?.filter((c) => c.health_score >= 80).length || 0;
@@ -50,6 +50,46 @@ export async function GET(req: NextRequest) {
         .length || 0;
     const criticalConnections =
       connectionStats?.filter((c) => c.health_score < 50).length || 0;
+
+    // Statement coverage (accounts with statements in last 3 days)
+    const { data: allAccounts, error: accountsError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('account_status', 'active');
+
+    if (accountsError) throw accountsError;
+
+    const { data: statementRows, error: statementsError } = await supabase
+      .from('account_statements')
+      .select('account_id, statement_date')
+      .order('statement_date', { ascending: false });
+
+    if (statementsError) throw statementsError;
+
+    const statementMap = new Map<string, string>();
+    (statementRows || []).forEach((row) => {
+      if (!statementMap.has(row.account_id)) {
+        statementMap.set(row.account_id, row.statement_date);
+      }
+    });
+
+    const staleThreshold = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    let withRecentStatements = 0;
+    (allAccounts || []).forEach((account) => {
+      const dateStr = statementMap.get(account.id);
+      if (!dateStr) {
+        return;
+      }
+      const statementDate = new Date(dateStr);
+      if (statementDate >= staleThreshold) {
+        withRecentStatements += 1;
+      }
+    });
+
+    const totalAccounts = allAccounts?.length || 0;
+    const missingStatements = Math.max(totalAccounts - withRecentStatements, 0);
+    const coveragePercent =
+      totalAccounts > 0 ? Math.round((withRecentStatements / totalAccounts) * 100) : 0;
 
     // Get recent failed jobs (last 24 hours)
     const twentyFourHoursAgo = new Date(
@@ -80,6 +120,12 @@ export async function GET(req: NextRequest) {
           total24h: totalJobs,
           failed24h: failedJobs,
           errorRate24h: Math.round(errorRate * 10) / 10,
+        },
+        statements: {
+          totalAccounts,
+          withRecentStatements,
+          missingStatements,
+          coveragePercent,
         },
         timestamp: new Date().toISOString(),
       },

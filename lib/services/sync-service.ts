@@ -7,6 +7,8 @@ import {
   createIngestionJob,
   updateIngestionJob,
   updateConnection,
+  upsertAccountStatement,
+  convertAmountToUsd,
 } from '@/lib/supabase';
 import {
   batchCreateOrUpdateAccounts,
@@ -272,6 +274,8 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                 }
               );
 
+              let cachedAccountRecord: { account_id: string; currency?: string | null; current_balance?: number | null } | null = null;
+
               for (const transaction of transactions) {
                 try {
                   const transactionId = `${providerId}_${connectionId}_${transaction.externalTransactionId}`;
@@ -279,7 +283,7 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                   if (providerAccount.account_id) {
                     const { data: account, error: accountError } = await supabase
                       .from('accounts')
-                      .select('account_id')
+                      .select('account_id, currency, current_balance')
                       .eq('id', providerAccount.account_id)
                       .single();
 
@@ -287,6 +291,8 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                       recordAccountError(`Account lookup failed for ${providerAccount.account_name}`);
                       continue;
                     }
+
+                    cachedAccountRecord = account;
 
                     const { data: mainTxData, error: txError } = await supabase
                       .from('transactions')
@@ -385,6 +391,53 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                   updated_at: new Date().toISOString(),
                 })
                 .eq('id', providerAccount.id);
+
+              if (providerAccount.account_id) {
+                const statementDate = (dateRangeInfo?.endDate || endDate || new Date())
+                  .toISOString()
+                  .split('T')[0];
+                const statementCurrency = (providerAccount.currency || cachedAccountRecord?.currency || 'USD').toUpperCase();
+                const statementBalance =
+                  typeof providerAccount.balance === 'number'
+                    ? providerAccount.balance
+                    : cachedAccountRecord?.current_balance ?? 0;
+                const availableBalance =
+                  typeof (providerAccount as any).available_balance === 'number'
+                    ? (providerAccount as any).available_balance
+                    : null;
+
+                let usdEquivalent: number | null = null;
+                try {
+                  usdEquivalent = await convertAmountToUsd(statementBalance, statementCurrency);
+                } catch (conversionError) {
+                  console.warn('Unable to convert statement to USD:', conversionError);
+                }
+
+                try {
+                  await upsertAccountStatement({
+                    tenantId,
+                    accountId: providerAccount.account_id,
+                    statementDate,
+                    endingBalance: statementBalance,
+                    availableBalance: availableBalance ?? statementBalance,
+                    currency: statementCurrency,
+                    usdEquivalent: usdEquivalent ?? undefined,
+                    source: 'synced',
+                    confidence: providerSyncStatus === 'error' ? 'medium' : 'high',
+                    metadata: {
+                      provider_account_id: providerAccount.id,
+                      connection_id: connectionId,
+                      provider: providerId,
+                    },
+                  });
+                } catch (statementError) {
+                  recordAccountError(
+                    `Failed to record statement for ${providerAccount.account_name}: ${
+                      statementError instanceof Error ? statementError.message : String(statementError)
+                    }`
+                  );
+                }
+              }
             } catch (txFetchError) {
               const message = `Account ${providerAccount.account_name}: ${provider.getErrorMessage(txFetchError)}`;
               errors.push(message);

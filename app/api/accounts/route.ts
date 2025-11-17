@@ -43,10 +43,23 @@ export async function GET(req: NextRequest) {
             last_sync_error,
             last_sync_duration_ms,
             last_synced_at
+          ),
+          latest_statement:account_statements_account_id_fkey(
+            statement_date,
+            ending_balance,
+            available_balance,
+            currency,
+            source,
+            confidence
           )
         `)
         .eq('tenant_id', tenantId)
         .eq('account_id', accountId) // Use account_id (primary key in database)
+        .order('statement_date', {
+          ascending: false,
+          foreignTable: 'account_statements_account_id_fkey',
+        })
+        .limit(1, { foreignTable: 'account_statements_account_id_fkey' })
         .single();
 
       if (error) {
@@ -62,6 +75,10 @@ export async function GET(req: NextRequest) {
       }
       account.is_synced = !!data.connection_id
 
+      if (Array.isArray(data.latest_statement) && data.latest_statement.length > 0) {
+        account.statement_snapshot = data.latest_statement[0]
+      }
+
       if (Array.isArray(data.provider_accounts) && data.provider_accounts.length > 0) {
         const providerMeta = data.provider_accounts[0]
         account.provider_sync_status = providerMeta.last_sync_status
@@ -69,6 +86,9 @@ export async function GET(req: NextRequest) {
         account.provider_sync_duration_ms = providerMeta.last_sync_duration_ms
         account.provider_last_synced_at = providerMeta.last_synced_at
       }
+
+      delete (account as any).provider_accounts
+      delete (account as any).latest_statement
 
       return NextResponse.json({ success: true, account });
     } else {

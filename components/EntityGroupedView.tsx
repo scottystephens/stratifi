@@ -244,11 +244,27 @@ export function EntityGroupedView({
                             Error: {providerSyncError}
                           </p>
                         )}
+                        {providerSyncStatus === 'error' && providerSyncError && (
+                          <p className="text-[11px] text-red-600 mt-1 line-clamp-2">
+                            Error: {providerSyncError}
+                          </p>
+                        )}
                         {lastSynced && (
                           <p className="text-[11px] text-gray-500 text-right">
                             Last synced {lastSynced}
                           </p>
                         )}
+                        <p
+                          className={`text-[11px] ${
+                            account.statement_snapshot ? 'text-emerald-700' : 'text-red-600'
+                          }`}
+                        >
+                          {account.statement_snapshot
+                            ? `Statements up to ${new Date(
+                                account.statement_snapshot.statement_date
+                              ).toLocaleDateString()}`
+                            : 'Missing daily statements'}
+                        </p>
                       </div>
 
                       {/* Sync Badge */}

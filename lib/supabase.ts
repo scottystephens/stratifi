@@ -131,6 +131,144 @@ export async function getExchangeRateHistory(currencyCode: string, days: number 
   }
 }
 
+export async function convertAmountToUsd(amount: number | null | undefined, currencyCode: string | null | undefined) {
+  if (amount === null || amount === undefined || !currencyCode) {
+    return null
+  }
+
+  const normalizedCode = currencyCode.toUpperCase()
+  if (normalizedCode === 'USD') {
+    return amount
+  }
+
+  try {
+    const latestRate = await getLatestExchangeRate(normalizedCode)
+    if (!latestRate?.rate) {
+      return null
+    }
+
+    return amount * latestRate.rate
+  } catch (error) {
+    console.error('convertAmountToUsd error:', error)
+    return null
+  }
+}
+
+// =====================================================
+// Account Statements
+// =====================================================
+
+export interface AccountStatement {
+  id?: string
+  tenant_id: string
+  account_id: string
+  statement_date: string
+  ending_balance: number
+  available_balance?: number | null
+  currency: string
+  usd_equivalent?: number | null
+  source: 'synced' | 'calculated' | 'manual' | 'imported'
+  confidence?: 'high' | 'medium' | 'low'
+  ingested_at?: string
+  metadata?: Record<string, any>
+}
+
+export interface UpsertAccountStatementInput {
+  tenantId: string
+  accountId: string
+  statementDate: string
+  endingBalance: number
+  availableBalance?: number | null
+  currency: string
+  usdEquivalent?: number | null
+  source: 'synced' | 'calculated' | 'manual' | 'imported'
+  confidence?: 'high' | 'medium' | 'low'
+  metadata?: Record<string, any>
+}
+
+export interface AccountStatementQueryOptions {
+  startDate?: string
+  endDate?: string
+  page?: number
+  pageSize?: number
+}
+
+export async function upsertAccountStatement(input: UpsertAccountStatementInput) {
+  try {
+    const payload = {
+      tenant_id: input.tenantId,
+      account_id: input.accountId,
+      statement_date: input.statementDate,
+      ending_balance: input.endingBalance,
+      available_balance: input.availableBalance ?? null,
+      currency: input.currency,
+      usd_equivalent: input.usdEquivalent ?? null,
+      source: input.source,
+      confidence: input.confidence ?? 'high',
+      metadata: input.metadata ?? {},
+      ingested_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabase
+      .from('account_statements')
+      .upsert(payload, {
+        onConflict: 'account_id,statement_date',
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as AccountStatement
+  } catch (error) {
+    console.error('Error upserting account statement:', error)
+    throw error
+  }
+}
+
+export async function getAccountStatements(
+  tenantId: string,
+  accountId: string,
+  options?: AccountStatementQueryOptions
+) {
+  try {
+    const page = Math.max(options?.page ?? 1, 1)
+    const pageSize = Math.min(Math.max(options?.pageSize ?? 100, 1), 500)
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = supabase
+      .from('account_statements')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .eq('account_id', accountId)
+      .order('statement_date', { ascending: false })
+      .range(from, to)
+
+    if (options?.startDate) {
+      query = query.gte('statement_date', options.startDate)
+    }
+
+    if (options?.endDate) {
+      query = query.lte('statement_date', options.endDate)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+    return {
+      statements: (data || []) as AccountStatement[],
+      count: count || 0,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil((count || 0) / pageSize), 1),
+      hasMore: (count || 0) > page * pageSize,
+    }
+  } catch (error) {
+    console.error('Error fetching account statements:', error)
+    throw error
+  }
+}
+
 // Health check
 export async function testSupabaseConnection() {
   try {
@@ -677,6 +815,14 @@ export interface Account {
   provider_sync_error?: string | null
   provider_sync_duration_ms?: number | null
   provider_last_synced_at?: string | null
+  statement_snapshot?: {
+    statement_date: string
+    ending_balance: number
+    available_balance?: number | null
+    currency: string
+    source: string
+    confidence?: string
+  } | null
 }
 
 export async function getAccountsByTenant(tenantId: string, includeConnection: boolean = true) {
@@ -697,10 +843,23 @@ export async function getAccountsByTenant(tenantId: string, includeConnection: b
           last_sync_status,
           last_sync_error,
           last_sync_duration_ms
+        ),
+        latest_statement:account_statements_account_id_fkey(
+          statement_date,
+          ending_balance,
+          available_balance,
+          currency,
+          source,
+          confidence
         )
       `)
       .eq('tenant_id', tenantId)
       .order('account_name')
+      .order('statement_date', {
+        ascending: false,
+        foreignTable: 'account_statements_account_id_fkey',
+      })
+      .limit(1, { foreignTable: 'account_statements_account_id_fkey' })
 
     const { data, error } = await query
 
@@ -728,8 +887,27 @@ export async function getAccountsByTenant(tenantId: string, includeConnection: b
         result.provider_last_synced_at = providerMeta.last_synced_at
       }
 
+      const latestStatement =
+        Array.isArray(account.latest_statement) && account.latest_statement.length > 0
+          ? account.latest_statement[0]
+          : null
+
+      if (latestStatement) {
+        result.statement_snapshot = {
+          statement_date: latestStatement.statement_date,
+          ending_balance: latestStatement.ending_balance,
+          available_balance: latestStatement.available_balance,
+          currency: latestStatement.currency,
+          source: latestStatement.source,
+          confidence: latestStatement.confidence,
+        }
+      } else {
+        result.statement_snapshot = null
+      }
+
       // Cleanup raw relationship payloads
       delete (result as any).provider_accounts
+      delete (result as any).latest_statement
       
       // Compute is_synced flag
       result.is_synced = !!account.connection_id

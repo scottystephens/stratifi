@@ -24,6 +24,12 @@ interface HealthData {
     failed24h: number;
     errorRate24h: number;
   };
+  statements: {
+    totalAccounts: number;
+    withRecentStatements: number;
+    missingStatements: number;
+    coveragePercent: number;
+  };
   timestamp: string;
 }
 
@@ -149,7 +155,7 @@ export default function HealthPage() {
         </Card>
 
         {/* Health Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Database */}
           <Card className="p-6">
             <div className="flex items-center space-x-3 mb-4">
@@ -203,6 +209,31 @@ export default function HealthPage() {
                 <span className="text-sm text-gray-600">Edge Functions</span>
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
+            </div>
+          </Card>
+
+          {/* Statements */}
+          <Card className="p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <AlertTriangle
+                className={`h-6 w-6 ${
+                  (health?.statements?.coveragePercent || 0) >= 80
+                    ? 'text-green-600'
+                    : 'text-amber-600'
+                }`}
+              />
+              <h3 className="text-lg font-semibold text-gray-900">Statements</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Coverage</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  {health?.statements?.coveragePercent ?? 0}%
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">
+                {health?.statements?.missingStatements ?? 0} account(s) missing recent statements
+              </p>
             </div>
           </Card>
         </div>
