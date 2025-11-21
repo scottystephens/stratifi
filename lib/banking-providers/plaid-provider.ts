@@ -202,21 +202,12 @@ export class PlaidProvider extends BankingProvider {
               transactions = filtered;
           }
 
-          // Apply date filtering if specified
+          // Plaid's /transactions/sync endpoint handles date ranges internally via cursor
+          // We should NOT apply additional date filtering as it will remove valid transactions
+          // The cursor-based pagination ensures we only get updates since the last sync
+          console.log(`📅 Skipping date filter for Plaid - /transactions/sync manages its own date range via cursor`);
           if (options?.startDate || options?.endDate) {
-              const beforeDateFilter = transactions.length;
-              const startTime = options?.startDate?.getTime() || 0;
-              const endTime = options?.endDate?.getTime() || Date.now();
-              
-              console.log(`🗓️  Date filter: ${new Date(startTime).toISOString()} to ${new Date(endTime).toISOString()}`);
-              console.log(`🗓️  Sample transaction dates:`, transactions.slice(0, 3).map(tx => tx.date));
-              
-              transactions = transactions.filter(tx => {
-                  const txTime = new Date(tx.date).getTime();
-                  return txTime >= startTime && txTime <= endTime;
-              });
-              
-              console.log(`🗓️  After date filter: ${transactions.length} transactions (was ${beforeDateFilter})`);
+              console.log(`⚠️  Date range was requested (${options.startDate?.toISOString()} to ${options.endDate?.toISOString()}) but will be ignored for Plaid`);
           }
 
           // Apply limit if specified
