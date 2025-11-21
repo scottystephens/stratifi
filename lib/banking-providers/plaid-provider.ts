@@ -12,13 +12,13 @@ import { CountryCode, Products } from 'plaid';
 export class PlaidProvider extends BankingProvider {
   config: BankingProviderConfig = {
     providerId: 'plaid',
-    displayName: 'Plaid (US/CA Banks)',
-    logo: '/logos/plaid.svg', // Needs to be added to public/logos
+    displayName: 'Plaid (Global Banks)',
+    logo: '/logos/plaid.svg',
     color: '#000000',
-    description: 'Connect with thousands of US and Canadian banks securely.',
+    description: 'Connect with thousands of banks worldwide securely.',
     authType: 'oauth',
     supportsSync: true,
-    supportedCountries: ['US', 'CA'],
+    supportedCountries: ['US', 'CA', 'GB', 'IE', 'FR', 'ES', 'NL', 'DE', 'IT', 'PL', 'BE', 'AT', 'DK', 'FI', 'NO', 'SE', 'EE', 'LT', 'LV'],
     website: 'https://plaid.com',
     integrationType: 'plaid_link',
   };

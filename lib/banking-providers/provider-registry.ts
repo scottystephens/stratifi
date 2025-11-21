@@ -28,7 +28,7 @@ class ProviderRegistry {
 
     this.registerProvider({
       providerId: 'plaid',
-      displayName: 'Plaid (US/CA Banks)',
+      displayName: 'Plaid (Global Banks)',
       factory: () => plaidProvider,
       enabled: true,
       requiredEnvVars: ['PLAID_CLIENT_ID', 'PLAID_SECRET'],
