@@ -266,19 +266,40 @@ This provides sample data for testing.
 
 ### Important: Transaction Availability
 
-⚠️ **Plaid Sandbox Transaction Delay**: In sandbox mode, transactions may not be immediately available after the initial OAuth. Plaid's API requires:
+⚠️ **Plaid Transaction Processing Delay**: Transactions are **NOT** immediately available after OAuth. This is expected Plaid behavior:
 
-1. **Initial Update**: Can take 30-60 seconds for transactions to appear
-2. **Historical Update**: Full transaction history may take several minutes
-3. **Webhook Notification**: Plaid sends `INITIAL_UPDATE` webhook when ready
+**API Response**:
+```
+error_code: 'PRODUCT_NOT_READY'
+error_message: 'the requested product is not yet ready. please provide a webhook or try the request again later'
+```
 
-**What you'll see**:
-- Account is created immediately with current balance
-- Transactions sync in the background
-- Page shows "Syncing..." status
-- Refresh the page after 1-2 minutes to see transactions
+**Timeline**:
+1. **Immediate**: Accounts are created with current balances
+2. **30-60 seconds**: Initial transactions begin appearing
+3. **2-5 minutes**: Full historical transactions available
+4. **Webhook**: Plaid sends `INITIAL_UPDATE` when first batch ready
+5. **Webhook**: Plaid sends `HISTORICAL_UPDATE` when all history loaded
 
-**For production**: Implement webhook handlers to automatically refresh when Plaid sends `INITIAL_UPDATE` or `HISTORICAL_UPDATE` events.
+**What you'll see in Stratifi**:
+- ✅ Account appears immediately (e.g., "Plaid Checking")
+- ✅ Current balance displayed
+- ⏳ Transactions: "No transactions found - Try syncing"
+- 🔄 Click "Sync Transactions" after 2-3 minutes
+- ✅ Transactions will appear
+
+**Current Implementation**:
+- Uses `/transactions/sync` endpoint (Plaid's recommended approach)
+- Gracefully handles `PRODUCT_NOT_READY` errors
+- Returns empty array initially, allowing sync to complete successfully
+- Subsequent syncs will fetch transactions once ready
+
+**Production Recommendation**:
+Implement webhook endpoint at `/api/webhooks/plaid` to handle:
+- `INITIAL_UPDATE`: First batch of transactions ready
+- `HISTORICAL_UPDATE`: All historical data loaded
+- `DEFAULT_UPDATE`: New transactions available
+- Auto-trigger sync when webhooks received
 
 ### Test Flow
 

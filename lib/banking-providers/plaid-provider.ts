@@ -157,48 +157,77 @@ export class PlaidProvider extends BankingProvider {
       offset?: number;
     }
   ): Promise<ProviderTransaction[]> {
-      // Note: Plaid's /transactions/get is deprecated in favor of /transactions/sync 
-      // but for simple fetching we can use /transactions/get if enabled, or sync.
-      // Here implementing simple get for compatibility.
+      // Plaid recommends using /transactions/sync instead of /transactions/get
+      // /transactions/sync works immediately after OAuth and handles incremental updates
       
-      const startDate = options?.startDate?.toISOString().split('T')[0] || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const endDate = options?.endDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0];
-
       try {
-          const response = await plaidClient.transactionsGet({
+          console.log('📊 Fetching Plaid transactions using /transactions/sync');
+          
+          // Use transactions/sync for better real-time data
+          const response = await plaidClient.transactionsSync({
               access_token: credentials.tokens.accessToken,
-              start_date: startDate,
-              end_date: endDate,
               options: {
-                  account_ids: [accountId],
-                  count: options?.limit || 100,
-                  offset: options?.offset || 0
+                  include_personal_finance_category: true,
               }
           });
 
-          return response.data.transactions.map(tx => ({
+          console.log(`✅ Plaid sync returned: ${response.data.added.length} added, ${response.data.modified.length} modified, ${response.data.removed.length} removed`);
+          
+          // Filter by accountId if specified
+          let transactions = response.data.added;
+          if (accountId) {
+              transactions = transactions.filter(tx => tx.account_id === accountId);
+          }
+
+          // Apply date filtering if specified
+          if (options?.startDate || options?.endDate) {
+              const startTime = options?.startDate?.getTime() || 0;
+              const endTime = options?.endDate?.getTime() || Date.now();
+              
+              transactions = transactions.filter(tx => {
+                  const txTime = new Date(tx.date).getTime();
+                  return txTime >= startTime && txTime <= endTime;
+              });
+          }
+
+          // Apply limit if specified
+          if (options?.limit) {
+              transactions = transactions.slice(0, options.limit);
+          }
+
+          return transactions.map(tx => ({
               externalTransactionId: tx.transaction_id,
               accountId: tx.account_id,
               date: new Date(tx.date),
-              amount: tx.amount * -1, // Plaid: positive is expense. Stratifi: positive is credit (deposit)? verification needed. 
-              // Checking Base Provider or other providers: 
-              // Usually banking apps treat credit as positive. Plaid treats debit as positive.
-              // Reversing sign to match standard accounting (credit +, debit -) if that's the system convention.
-              // Let's assume standard: inflow positive, outflow negative.
-              // Plaid: $50 coffee -> amount: 50.  $1000 paycheck -> amount: -1000.
-              // So multiplying by -1 gives: coffee -50, paycheck 1000.
+              amount: tx.amount * -1, // Plaid: positive = expense, negative = income. We reverse to match banking standard.
               currency: tx.iso_currency_code || 'USD',
               description: tx.name,
-              type: (tx.amount < 0) ? 'credit' : 'debit', // based on Plaid raw amount
-              category: tx.category ? tx.category[0] : undefined,
+              type: (tx.amount < 0) ? 'credit' : 'debit', // Based on Plaid's raw amount
+              counterpartyName: tx.merchant_name || undefined,
+              category: tx.personal_finance_category?.primary || tx.category?.[0],
               metadata: {
                   merchantName: tx.merchant_name,
-                  category: tx.category
+                  category: tx.category,
+                  personalFinanceCategory: tx.personal_finance_category,
+                  pending: tx.pending,
+                  paymentChannel: tx.payment_channel
               }
           }));
 
-      } catch (error) {
-          console.error("Error fetching Plaid transactions:", error);
+      } catch (error: any) {
+          console.error("Error fetching Plaid transactions:", {
+              message: error?.message,
+              errorCode: error?.response?.data?.error_code,
+              errorMessage: error?.response?.data?.error_message
+          });
+          
+          // If PRODUCT_NOT_READY, return empty array instead of throwing
+          // This allows the sync to complete successfully and try again later
+          if (error?.response?.data?.error_code === 'PRODUCT_NOT_READY') {
+              console.log('⚠️  Plaid transactions not ready yet. Will retry on next sync.');
+              return [];
+          }
+          
           throw error;
       }
   }
