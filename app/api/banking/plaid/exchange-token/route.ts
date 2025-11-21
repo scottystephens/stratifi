@@ -68,6 +68,15 @@ export async function POST(req: NextRequest) {
         console.warn('Could not fetch provider user info, using defaults', e);
     }
 
+    console.log('💾 Storing Plaid token in provider_tokens table:', {
+        connectionId: connection.id,
+        tenantId: connection.tenant_id,
+        providerId,
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken,
+        accessTokenLength: tokens.accessToken?.length,
+    });
+
     // Store token in provider_tokens table (this is what the sync API looks for)
     const { data: tokenData, error: tokenError } = await supabase
         .from('provider_tokens')
@@ -91,8 +100,13 @@ export async function POST(req: NextRequest) {
         .single();
 
     if (tokenError) {
-        console.error('Error storing OAuth token:', tokenError);
-        throw new Error('Failed to store OAuth token');
+        console.error('❌ Error storing OAuth token:', {
+            error: tokenError,
+            code: tokenError.code,
+            message: tokenError.message,
+            details: tokenError.details
+        });
+        throw new Error(`Failed to store OAuth token: ${tokenError.message}`);
     }
 
     console.log('✅ OAuth token stored successfully:', {
