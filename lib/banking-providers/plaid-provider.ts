@@ -8,6 +8,11 @@ import {
 } from './base-provider';
 import { plaidClient, PLAID_PRODUCTS, PLAID_COUNTRY_CODES } from '../plaid';
 import { CountryCode, Products } from 'plaid';
+import { 
+  syncPlaidTransactions, 
+  syncPlaidAccounts,
+  shouldSyncPlaidConnection 
+} from '../services/plaid-sync-service';
 
 export class PlaidProvider extends BankingProvider {
   config: BankingProviderConfig = {
@@ -157,13 +162,18 @@ export class PlaidProvider extends BankingProvider {
       offset?: number;
     }
   ): Promise<ProviderTransaction[]> {
-      // Plaid recommends using /transactions/sync instead of /transactions/get
-      // /transactions/sync works immediately after OAuth and handles incremental updates
+      // IMPORTANT: This method is called PER ACCOUNT by sync-service.ts
+      // To optimize costs, we need to fetch ALL transactions ONCE and cache them
+      // The sync-service will call this 3 times for 3 accounts - we should only call Plaid API once
+      
+      // For now, we'll use the direct API call but log a warning
+      // TODO: Refactor sync-service to call Plaid once per connection, not per account
       
       try {
           console.log('📊 Fetching Plaid transactions using /transactions/sync');
+          console.log('⚠️  NOTE: Being called per-account. Should optimize to call once per connection.');
           
-          // Use transactions/sync for better real-time data
+          // Use transactions/sync for incremental updates
           const response = await plaidClient.transactionsSync({
               access_token: credentials.tokens.accessToken,
               options: {
@@ -179,16 +189,6 @@ export class PlaidProvider extends BankingProvider {
               nextCursor: response.data.next_cursor?.substring(0, 20) + '...'
           });
           
-          // Log first few transactions for debugging
-          if (response.data.added.length > 0) {
-              console.log('📝 Sample Plaid transactions:', response.data.added.slice(0, 3).map(tx => ({
-                  date: tx.date,
-                  name: tx.name,
-                  amount: tx.amount,
-                  account: tx.account_id
-              })));
-          }
-          
           // Filter by accountId if specified
           let transactions = response.data.added;
           
@@ -202,13 +202,8 @@ export class PlaidProvider extends BankingProvider {
               transactions = filtered;
           }
 
-          // Plaid's /transactions/sync endpoint handles date ranges internally via cursor
-          // We should NOT apply additional date filtering as it will remove valid transactions
-          // The cursor-based pagination ensures we only get updates since the last sync
-          console.log(`📅 Skipping date filter for Plaid - /transactions/sync manages its own date range via cursor`);
-          if (options?.startDate || options?.endDate) {
-              console.log(`⚠️  Date range was requested (${options.startDate?.toISOString()} to ${options.endDate?.toISOString()}) but will be ignored for Plaid`);
-          }
+          // NO date filtering - Plaid manages this via cursor
+          console.log(`📅 Skipping date filter - /transactions/sync manages date range via cursor`);
 
           // Apply limit if specified
           if (options?.limit) {
@@ -219,10 +214,10 @@ export class PlaidProvider extends BankingProvider {
               externalTransactionId: tx.transaction_id,
               accountId: tx.account_id,
               date: new Date(tx.date),
-              amount: tx.amount * -1, // Plaid: positive = expense, negative = income. We reverse to match banking standard.
+              amount: tx.amount * -1, // Plaid: positive = expense, negative = income
               currency: tx.iso_currency_code || 'USD',
               description: tx.name,
-              type: (tx.amount < 0) ? 'credit' : 'debit', // Based on Plaid's raw amount
+              type: (tx.amount < 0) ? 'credit' : 'debit',
               counterpartyName: tx.merchant_name || undefined,
               category: tx.personal_finance_category?.primary || tx.category?.[0],
               metadata: {
@@ -241,8 +236,6 @@ export class PlaidProvider extends BankingProvider {
               errorMessage: error?.response?.data?.error_message
           });
           
-          // If PRODUCT_NOT_READY, return empty array instead of throwing
-          // This allows the sync to complete successfully and try again later
           if (error?.response?.data?.error_code === 'PRODUCT_NOT_READY') {
               console.log('⚠️  Plaid transactions not ready yet. Will retry on next sync.');
               return [];
@@ -250,6 +243,84 @@ export class PlaidProvider extends BankingProvider {
           
           throw error;
       }
+  }
+
+  // =====================================================
+  // Optimized Connection-Level Sync
+  // =====================================================
+
+  /**
+   * Sync all transactions for a connection in ONE API call
+   * This is the cost-optimized approach - call once, distribute to accounts
+   * Returns transactions grouped by account
+   */
+  async syncConnectionTransactions(
+    credentials: ConnectionCredentials,
+    options?: {
+      forceFullSync?: boolean;
+      importJobId?: string;
+    }
+  ): Promise<Map<string, ProviderTransaction[]>> {
+    console.log('🚀 Starting connection-level Plaid sync (optimized - ONE API call)');
+    
+    const syncResult = await syncPlaidTransactions(
+      credentials.tenantId,
+      credentials.connectionId,
+      credentials.tokens.accessToken,
+      options
+    );
+
+    console.log(`✅ Cursor-based sync complete:`, {
+      added: syncResult.transactionsAdded,
+      modified: syncResult.transactionsModified,
+      removed: syncResult.transactionsRemoved,
+      imported: syncResult.transactionsImported,
+      cursor: syncResult.cursor.substring(0, 20) + '...',
+    });
+
+    // Fetch the stored Plaid transactions from our database (not from API!)
+    const { supabase } = await import('../supabase');
+    const { data: plaidTxns } = await supabase
+      .from('plaid_transactions')
+      .select('*')
+      .eq('connection_id', credentials.connectionId)
+      .eq('sync_action', 'added')
+      .order('date', { ascending: false })
+      .limit(options?.importJobId ? 500 : 100); // Reasonable limit
+
+    // Group by Plaid account_id
+    const txnsByAccount = new Map<string, ProviderTransaction[]>();
+    
+    plaidTxns?.forEach(tx => {
+      if (!txnsByAccount.has(tx.account_id)) {
+        txnsByAccount.set(tx.account_id, []);
+      }
+      
+      txnsByAccount.get(tx.account_id)!.push({
+        externalTransactionId: tx.transaction_id,
+        accountId: tx.account_id,
+        date: new Date(tx.date),
+        amount: Math.abs(tx.amount), // Already reversed in storage
+        currency: tx.iso_currency_code || 'USD',
+        description: tx.merchant_name || tx.name,
+        type: tx.amount < 0 ? 'credit' : 'debit',
+        counterpartyName: tx.counterparty_name || tx.merchant_name || undefined,
+        category: tx.personal_finance_category_primary || undefined,
+        metadata: {
+          merchantName: tx.merchant_name,
+          personalFinanceCategory: {
+            primary: tx.personal_finance_category_primary,
+            detailed: tx.personal_finance_category_detailed,
+          },
+          pending: tx.pending,
+          paymentChannel: tx.payment_channel,
+        }
+      });
+    });
+
+    console.log(`📊 Distributed transactions: ${txnsByAccount.size} accounts`);
+    
+    return txnsByAccount;
   }
 
   // =====================================================

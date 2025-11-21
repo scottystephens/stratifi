@@ -216,34 +216,67 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
     // Sync transactions
     if (syncTransactions) {
       try {
-        // First, check raw provider_accounts without JOIN to diagnose
-        const { data: rawProviderAccounts, error: rawError } = await supabase
-          .from('provider_accounts')
-          .select('id, account_id, account_name, external_account_id, sync_enabled')
-          .eq('connection_id', connectionId)
-          .eq('provider_id', providerId);
+        // OPTIMIZATION: For Plaid, use connection-level sync (ONE API call)
+        // For other providers, use per-account sync
+        if (providerId === 'plaid') {
+          console.log('🚀 Using optimized Plaid connection-level sync');
+          
+          // Import the Plaid sync service
+          const { performPlaidSync } = await import('./plaid-sync-service');
+          
+          const plaidResult = await performPlaidSync(
+            tenantId,
+            connectionId,
+            credentials.tokens.accessToken,
+            {
+              syncAccounts: false, // Already synced above
+              syncTransactions: true,
+              forceFullSync: forceSync,
+              importJobId: ingestionJob.id,
+            }
+          );
 
-        console.log(`🔍 Raw provider_accounts query returned ${rawProviderAccounts?.length || 0} rows`);
-        if (rawProviderAccounts && rawProviderAccounts.length > 0) {
-          console.log('📋 Provider accounts:', rawProviderAccounts.map(pa => ({
-            name: pa.account_name,
-            account_id_fk: pa.account_id,
-            sync_enabled: pa.sync_enabled
-          })));
-        }
+          transactionsSynced = plaidResult.transactionsImported;
+          
+          if (plaidResult.errors && plaidResult.errors.length > 0) {
+            errors.push(...plaidResult.errors);
+          }
 
-        const { data: providerAccounts, error: joinError } = await supabase
-          .from('provider_accounts')
-          .select('*, accounts!inner(account_id, account_type, last_synced_at)')
-          .eq('connection_id', connectionId)
-          .eq('provider_id', providerId)
-          .eq('sync_enabled', true);
+          console.log(`✅ Plaid sync: ${plaidResult.transactionsAdded} added, ${plaidResult.transactionsModified} modified, ${plaidResult.transactionsRemoved} removed, ${plaidResult.transactionsImported} imported`);
+          
+          // Skip the per-account loop for Plaid since we already processed everything
+        } else {
+          // Standard per-account sync for non-Plaid providers (Bunq, Tink, etc.)
+          console.log('📦 Using standard per-account sync for provider:', providerId);
+          
+          // First, check raw provider_accounts without JOIN to diagnose
+          const { data: rawProviderAccounts, error: rawError } = await supabase
+            .from('provider_accounts')
+            .select('id, account_id, account_name, external_account_id, sync_enabled')
+            .eq('connection_id', connectionId)
+            .eq('provider_id', providerId);
 
-        if (joinError) {
-          console.error('❌ Error fetching provider accounts with JOIN:', joinError);
-        }
+          console.log(`🔍 Raw provider_accounts query returned ${rawProviderAccounts?.length || 0} rows`);
+          if (rawProviderAccounts && rawProviderAccounts.length > 0) {
+            console.log('📋 Provider accounts:', rawProviderAccounts.map(pa => ({
+              name: pa.account_name,
+              account_id_fk: pa.account_id,
+              sync_enabled: pa.sync_enabled
+            })));
+          }
 
-        console.log(`🔍 JOIN query returned ${providerAccounts?.length || 0} rows`);
+          const { data: providerAccounts, error: joinError } = await supabase
+            .from('provider_accounts')
+            .select('*, accounts!inner(account_id, account_type, last_synced_at)')
+            .eq('connection_id', connectionId)
+            .eq('provider_id', providerId)
+            .eq('sync_enabled', true);
+
+          if (joinError) {
+            console.error('❌ Error fetching provider accounts with JOIN:', joinError);
+          }
+
+          console.log(`🔍 JOIN query returned ${providerAccounts?.length || 0} rows`);
 
         // FALLBACK: If JOIN returns 0 rows but raw query returned data,
         // the account_id FK is likely null/broken. Try without the JOIN.
@@ -533,7 +566,8 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                 .eq('id', providerAccount.id);
             }
           }
-        }
+        } // End of per-account loop for non-Plaid providers
+        } // End of else block (non-Plaid providers)
       } catch (transactionsError) {
         errors.push(`Failed to sync transactions: ${provider.getErrorMessage(transactionsError)}`);
       }
