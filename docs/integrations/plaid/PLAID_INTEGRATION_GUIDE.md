@@ -253,16 +253,33 @@ We multiply by `-1` to convert to standard accounting (positive = credit/deposit
 
 ### Sandbox Credentials
 
-When Plaid Link opens in sandbox mode, use:
+According to [Plaid's Transactions testing guide](https://plaid.com/docs/transactions/), use these test users:
+
+#### For Testing Transactions (RECOMMENDED):
+- **Username**: `user_transactions_dynamic`
+- **Password**: Any non-blank password
+- **Bank**: First Platypus Bank (`ins_109508`)
+- **Features**:
+  - 6 months of realistic, dynamic transaction data
+  - Transactions update when calling `/transactions/refresh`
+  - Supports recurring transactions
+  - Can add custom transactions via `/sandbox/transactions/create`
+
+#### Basic Testing (Limited Transactions):
 - **Username**: `user_good`
 - **Password**: `pass_good`
+- **Note**: This user has minimal transaction data
 
-This provides sample data for testing.
+#### Other Test Personas:
+- `user_ewa_user` - Earned-wage access persona (3 months data)
+- `user_yuppie` - Young affluent professional (3 months data)
+- `user_small_business` - Small business persona (3 months data)
 
-### Test Bank: "First Platypus Bank"
-- Multiple account types
-- Sample transactions
+### Test Bank: "First Platypus Bank" (`ins_109508`)
+- Multiple account types (checking, savings, credit, etc.)
+- Dynamic transaction data
 - All features enabled
+- No OAuth required (easier testing)
 
 ### Important: Transaction Availability
 
@@ -294,9 +311,35 @@ error_message: 'the requested product is not yet ready. please provide a webhook
 - Returns empty array initially, allowing sync to complete successfully
 - Subsequent syncs will fetch transactions once ready
 
+**Why You're Not Seeing Transactions**:
+
+1. **Using wrong test user**: `user_good` has minimal/no transaction data
+   - ✅ **Solution**: Use `user_transactions_dynamic` instead
+   
+2. **Plaid processing delay**: Even with correct user, first sync returns 0 transactions
+   - ✅ **Solution**: Wait 2-3 minutes, then click "Sync Transactions" on the account page
+   
+3. **Sandbox behavior**: Transactions aren't pre-populated like production banks
+   - ✅ **Solution**: Use `user_transactions_dynamic` which has 6 months of dynamic data
+
+**Step-by-Step to See Transactions**:
+```
+1. Delete existing Plaid connection (if using user_good)
+2. Go to /connections/new
+3. Click "Connect Plaid"
+4. Select "First Platypus Bank" (ins_109508)
+5. Username: user_transactions_dynamic
+6. Password: test123 (any non-blank password)
+7. Select accounts
+8. Wait on connection page for 2-3 minutes
+9. Click "Sync Transactions" button
+10. Transactions should appear!
+```
+
 **Production Recommendation**:
 Implement webhook endpoint at `/api/webhooks/plaid` to handle:
-- `INITIAL_UPDATE`: First batch of transactions ready
+- `SYNC_UPDATES_AVAILABLE`: New transaction data ready
+- `INITIAL_UPDATE`: First batch of transactions ready  
 - `HISTORICAL_UPDATE`: All historical data loaded
 - `DEFAULT_UPDATE`: New transactions available
 - Auto-trigger sync when webhooks received
