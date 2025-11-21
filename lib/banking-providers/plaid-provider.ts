@@ -204,13 +204,19 @@ export class PlaidProvider extends BankingProvider {
 
           // Apply date filtering if specified
           if (options?.startDate || options?.endDate) {
+              const beforeDateFilter = transactions.length;
               const startTime = options?.startDate?.getTime() || 0;
               const endTime = options?.endDate?.getTime() || Date.now();
+              
+              console.log(`🗓️  Date filter: ${new Date(startTime).toISOString()} to ${new Date(endTime).toISOString()}`);
+              console.log(`🗓️  Sample transaction dates:`, transactions.slice(0, 3).map(tx => tx.date));
               
               transactions = transactions.filter(tx => {
                   const txTime = new Date(tx.date).getTime();
                   return txTime >= startTime && txTime <= endTime;
               });
+              
+              console.log(`🗓️  After date filter: ${transactions.length} transactions (was ${beforeDateFilter})`);
           }
 
           // Apply limit if specified

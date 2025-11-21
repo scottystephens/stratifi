@@ -338,6 +338,7 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
               );
 
               console.log(`📊 Fetched ${transactions.length} transactions for account ${providerAccount.account_name}`);
+              console.log(`🔑 Provider account details: { id: ${providerAccount.id}, account_id: ${providerAccount.account_id}, name: ${providerAccount.account_name} }`);
 
               let cachedAccountRecord: { account_id: string; currency?: string | null; current_balance?: number | null } | null = null;
 
@@ -345,7 +346,10 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                 try {
                   const transactionId = `${providerId}_${connectionId}_${transaction.externalTransactionId}`;
                   
+                  console.log(`🔍 Processing transaction ${transactionId}, provider_account.account_id = ${providerAccount.account_id}`);
+                  
                   if (providerAccount.account_id) {
+                    console.log(`✅ Entering transaction insert block for ${providerAccount.account_name}`);
                     const { data: account, error: accountError } = await supabase
                       .from('accounts')
                       .select('account_id, currency, current_balance')
