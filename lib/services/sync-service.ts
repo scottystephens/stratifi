@@ -216,17 +216,80 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
     // Sync transactions
     if (syncTransactions) {
       try {
-        const { data: providerAccounts } = await supabase
+        // First, check raw provider_accounts without JOIN to diagnose
+        const { data: rawProviderAccounts, error: rawError } = await supabase
+          .from('provider_accounts')
+          .select('id, account_id, account_name, external_account_id, sync_enabled')
+          .eq('connection_id', connectionId)
+          .eq('provider_id', providerId);
+
+        console.log(`🔍 Raw provider_accounts query returned ${rawProviderAccounts?.length || 0} rows`);
+        if (rawProviderAccounts && rawProviderAccounts.length > 0) {
+          console.log('📋 Provider accounts:', rawProviderAccounts.map(pa => ({
+            name: pa.account_name,
+            account_id_fk: pa.account_id,
+            sync_enabled: pa.sync_enabled
+          })));
+        }
+
+        const { data: providerAccounts, error: joinError } = await supabase
           .from('provider_accounts')
           .select('*, accounts!inner(account_id, account_type, last_synced_at)')
           .eq('connection_id', connectionId)
           .eq('provider_id', providerId)
           .eq('sync_enabled', true);
 
-        if (providerAccounts && providerAccounts.length > 0) {
-          console.log(`💳 Syncing transactions for ${providerAccounts.length} account(s)...`);
+        if (joinError) {
+          console.error('❌ Error fetching provider accounts with JOIN:', joinError);
+        }
 
-          for (const providerAccount of providerAccounts) {
+        console.log(`🔍 JOIN query returned ${providerAccounts?.length || 0} rows`);
+
+        // FALLBACK: If JOIN returns 0 rows but raw query returned data,
+        // the account_id FK is likely null/broken. Try without the JOIN.
+        let accountsToSync = providerAccounts;
+        if ((!providerAccounts || providerAccounts.length === 0) && 
+            rawProviderAccounts && rawProviderAccounts.length > 0) {
+          console.warn('⚠️  JOIN returned 0 rows but provider_accounts exist. Using fallback query without JOIN.');
+          console.warn('⚠️  This indicates provider_accounts.account_id FK is null or invalid.');
+          
+          // Fetch accounts separately and manually join
+          const { data: accounts } = await supabase
+            .from('accounts')
+            .select('id, account_id, account_type, last_synced_at')
+            .eq('connection_id', connectionId)
+            .eq('provider_id', providerId);
+
+          console.log(`📦 Found ${accounts?.length || 0} accounts for connection`);
+
+          // Map provider_accounts to accounts by external_id
+          accountsToSync = rawProviderAccounts
+            .filter(pa => pa.sync_enabled)
+            .map(pa => {
+              // Try to find matching account
+              const matchingAccount = accounts?.find(a => a.id === pa.account_id);
+              
+              if (!matchingAccount) {
+                console.warn(`⚠️  No matching account found for provider_account ${pa.account_name} (id: ${pa.id}, account_id FK: ${pa.account_id})`);
+              }
+              
+              return {
+                ...pa,
+                accounts: matchingAccount || { 
+                  account_id: pa.account_id, 
+                  account_type: 'checking', 
+                  last_synced_at: null 
+                }
+              };
+            }) as any;
+
+          console.log(`🔄 Fallback: Will attempt to sync ${accountsToSync?.length || 0} accounts`);
+        }
+
+        if (accountsToSync && accountsToSync.length > 0) {
+          console.log(`💳 Syncing transactions for ${accountsToSync.length} account(s)...`);
+
+          for (const providerAccount of accountsToSync) {
             try {
               let startDate: Date;
               let endDate: Date;
@@ -274,6 +337,8 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                 }
               );
 
+              console.log(`📊 Fetched ${transactions.length} transactions for account ${providerAccount.account_name}`);
+
               let cachedAccountRecord: { account_id: string; currency?: string | null; current_balance?: number | null } | null = null;
 
               for (const transaction of transactions) {
@@ -288,7 +353,8 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                       .single();
 
                     if (accountError || !account?.account_id) {
-                      recordAccountError(`Account lookup failed for ${providerAccount.account_name}`);
+                      recordAccountError(`Account lookup failed for ${providerAccount.account_name}: ${accountError?.message || 'account_id not found'}`);
+                      console.error(`❌ Account lookup failed - provider_account.account_id: ${providerAccount.account_id}, error:`, accountError);
                       continue;
                     }
 
@@ -328,8 +394,12 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
 
                     if (txError) {
                       recordAccountError(`Failed to import transaction ${transaction.externalTransactionId}: ${txError.message}`);
+                      console.error(`❌ Transaction upsert failed:`, txError);
                     } else {
                       transactionsSynced++;
+                      if (transactionsSynced <= 3) {
+                        console.log(`✅ Transaction saved: ${transaction.description} (${transaction.amount} ${transaction.currency})`);
+                      }
                       
                       await supabase
                         .from('provider_transactions')
@@ -358,11 +428,18 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
                           { onConflict: 'connection_id,provider_id,external_transaction_id' }
                         );
                     }
+                  } else {
+                    console.warn(`⚠️  Skipping transactions for ${providerAccount.account_name} - account_id is null/undefined`);
+                    recordAccountError(`Cannot import transactions: provider_account.account_id is null`);
+                    break; // Skip remaining transactions for this account
                   }
                 } catch (txError) {
                   recordAccountError(`Transaction import error: ${txError instanceof Error ? txError.message : String(txError)}`);
+                  console.error(`❌ Transaction loop error:`, txError);
                 }
               }
+              
+              console.log(`📊 Account ${providerAccount.account_name}: ${transactionsSynced} total transactions synced so far`);
 
               // Update account metadata to inform future incremental sync windows
               if (providerAccount.account_id) {
