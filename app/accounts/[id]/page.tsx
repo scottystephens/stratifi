@@ -6,8 +6,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTenant } from '@/lib/tenant-context';
 import { useAuth } from '@/lib/auth-context';
+import { Navigation } from '@/components/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -17,6 +19,8 @@ import {
   Plus,
   BarChart3,
   ListOrdered,
+  RefreshCw,
+  Database,
 } from 'lucide-react';
 import type { Account } from '@/lib/supabase';
 import { accountKeys, useAccount } from '@/lib/hooks/use-accounts';
@@ -279,40 +283,52 @@ export default function AccountOverviewPage() {
 
   if (!currentTenant) {
     return (
-      <div className="p-8">
-        <Card className="p-12 text-center max-w-2xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-4">No Organization Selected</h2>
-          <p className="text-muted-foreground">
-            Please select an organization from the sidebar.
-          </p>
-        </Card>
+      <div className="flex h-screen">
+        <Navigation />
+        <main className="flex-1 overflow-y-auto bg-background p-8">
+          <Card className="p-12 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-4">No Organization Selected</h2>
+            <p className="text-muted-foreground">
+              Please select an organization from the sidebar.
+            </p>
+          </Card>
+        </main>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="text-center py-12">Loading account…</div>
+      <div className="flex h-screen">
+        <Navigation />
+        <main className="flex-1 overflow-y-auto bg-background p-8">
+          <div className="text-center py-12">Loading account…</div>
+        </main>
       </div>
     );
   }
 
   if (!account) {
     return (
-      <div className="p-8">
-        <Card className="p-12 text-center max-w-2xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-4">Account Not Found</h2>
-          <Button onClick={() => router.push('/accounts')}>Back to Accounts</Button>
-        </Card>
+      <div className="flex h-screen">
+        <Navigation />
+        <main className="flex-1 overflow-y-auto bg-background p-8">
+          <Card className="p-12 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-4">Account Not Found</h2>
+            <Button onClick={() => router.push('/accounts')}>Back to Accounts</Button>
+          </Card>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
+    <div className="flex h-screen">
+      <Navigation />
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <BarChart3 className="h-4 w-4 text-blue-600" />
             Account Overview
@@ -321,6 +337,31 @@ export default function AccountOverviewPage() {
           <p className="text-sm text-muted-foreground mt-1">
             {account.bank_name || 'Unspecified bank'} • {account.account_type}
           </p>
+          
+          {/* Sync and Connection Info */}
+          <div className="flex items-center gap-3 mt-2">
+            {account.connection_id && (
+              <Link 
+                href={`/connections/${account.connection_id}`}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+              >
+                <Database className="h-3 w-3" />
+                View Connection
+              </Link>
+            )}
+            {account.last_synced_at && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <RefreshCw className="h-3 w-3" />
+                Synced {new Date(account.last_synced_at).toLocaleString()}
+              </div>
+            )}
+            {account.provider_id && (
+              <Badge variant="outline" className="text-xs">
+                {account.provider_id}
+              </Badge>
+            )}
+          </div>
+
           <p className="text-lg font-semibold mt-4">
             {formatCurrencyValue(
               latestStatement?.ending_balance ?? account.current_balance ?? 0,
@@ -337,10 +378,6 @@ export default function AccountOverviewPage() {
           <Button variant="outline" onClick={() => router.push('/accounts')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             All Accounts
-          </Button>
-          <Button onClick={() => router.push(`/accounts/${accountId}/edit`)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit Account
           </Button>
         </div>
       </div>
@@ -818,6 +855,8 @@ export default function AccountOverviewPage() {
         </Card>
       )}
 
+        </div>
+      </main>
     </div>
   );
 }

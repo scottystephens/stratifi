@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/lib/tenant-context';
@@ -635,11 +636,22 @@ export default function ConnectionDetailPage() {
                   const currency = account.currency || 'EUR';
                   const status = account.account_status || account.status || 'active';
                   
+                  // Get the account ID for linking
+                  const accountLinkId = account.id || account.account_id;
+                  const hasLink = !!accountLinkId;
+                  
                   return (
-                  <div key={account.id || account.account_id} className="border rounded-lg p-4">
+                  <Link 
+                    key={account.id || account.account_id}
+                    href={hasLink ? `/accounts/${accountLinkId}` : '#'}
+                    className={`border rounded-lg p-4 block transition-all ${hasLink ? 'hover:shadow-md hover:border-blue-300' : ''}`}
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-semibold">{accountName}</h3>
+                        <h3 className="font-semibold flex items-center gap-2">
+                          {accountName}
+                          {hasLink && <ArrowLeft className="h-3 w-3 rotate-180 text-blue-600" />}
+                        </h3>
                         <p className="text-sm text-muted-foreground">{accountType}</p>
                       </div>
                       <div className="text-right">
@@ -677,7 +689,7 @@ export default function ConnectionDetailPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </Link>
                   );
                 })}
               </div>

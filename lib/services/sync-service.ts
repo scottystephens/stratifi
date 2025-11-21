@@ -99,17 +99,23 @@ export async function performSync(options: SyncOptions): Promise<SyncResult> {
       });
 
   try {
-    // Get provider tokens
+    // Get provider tokens - using maybeSingle() to handle edge cases
     const { data: tokenData, error: tokenError } = await supabase
       .from('provider_tokens')
       .select('*')
       .eq('connection_id', connectionId)
       .eq('provider_id', providerId)
       .eq('status', 'active')
-      .single();
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      throw new Error(`OAuth token not found. Please reconnect your account. ${tokenError?.message || ''}`);
+    if (tokenError) {
+      throw new Error(`Token query failed: ${tokenError.message}. Please reconnect your account.`);
+    }
+
+    if (!tokenData) {
+      throw new Error('OAuth token not found. Please reconnect your account via the Connections page.');
     }
 
     // Check if token needs refresh

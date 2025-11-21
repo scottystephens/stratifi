@@ -90,21 +90,35 @@ export async function POST(
     });
 
     try {
-      // Get provider tokens
+      // Get provider tokens - using maybeSingle() to handle edge cases
       const { data: tokenData, error: tokenError } = await supabase
         .from('provider_tokens')
         .select('*')
         .eq('connection_id', connectionId)
         .eq('provider_id', providerId)
         .eq('status', 'active')
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (tokenError || !tokenData) {
-        console.error('❌ Token lookup failed:', {
+      if (tokenError) {
+        console.error('❌ Token query error:', {
           connectionId,
           providerId,
           error: tokenError,
-          tokenData,
+          code: tokenError.code,
+          message: tokenError.message,
+        });
+        
+        throw new Error(
+          `Token query failed: ${tokenError.message}. Please reconnect your account.`
+        );
+      }
+
+      if (!tokenData) {
+        console.error('❌ No active token found:', {
+          connectionId,
+          providerId,
         });
         
         // Check if any tokens exist for this connection (for debugging)
@@ -116,12 +130,18 @@ export async function POST(
         
         console.error('🔍 All tokens for connection:', {
           count: allTokens?.length || 0,
-          tokens: allTokens,
+          tokens: allTokens?.map(t => ({
+            id: t.id,
+            status: t.status,
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+            expires_at: t.expires_at,
+          })),
           error: allTokensError,
         });
         
         throw new Error(
-          `OAuth token not found. Please reconnect your account. ${tokenError?.message || ''}`
+          'OAuth token not found. Please reconnect your account via the Connections page.'
         );
       }
 

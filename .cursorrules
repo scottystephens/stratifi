@@ -575,9 +575,50 @@ DATABASE_URL="postgresql://postgres:[PASSWORD]@db.vnuithaqtpgbwmdvtxik.supabase.
 
 ### 🔴 CRITICAL: How to Run SQL Migrations
 
-**The ONLY reliable way to run SQL migrations on production Supabase is through the web dashboard.**
+**There are TWO reliable methods for running SQL migrations on production Supabase.**
 
-#### Method 1: Supabase SQL Editor (Recommended)
+#### Method 1: PostgreSQL CLI via psql (✅ VERIFIED WORKING)
+
+**Use this for schema changes and migrations:**
+
+```bash
+# Load environment variables and run migration
+source .env.local && psql "$DATABASE_URL" -f scripts/migrations/XX-migration-name.sql
+
+# Verify tables created
+source .env.local && psql "$DATABASE_URL" -c "
+SELECT table_name FROM information_schema.tables 
+WHERE table_name = 'your_table_name';"
+
+# Test with a simple query
+source .env.local && psql "$DATABASE_URL" -c "SELECT NOW();"
+```
+
+**Example:**
+```bash
+# Run migration 29
+source .env.local && psql "$DATABASE_URL" -f scripts/migrations/29-create-plaid-storage.sql
+
+# Verify it worked
+source .env.local && psql "$DATABASE_URL" -c "
+SELECT table_name FROM information_schema.tables 
+WHERE table_name IN ('plaid_sync_cursors', 'plaid_transactions', 'plaid_accounts');"
+```
+
+**Prerequisites:**
+- PostgreSQL client installed (`brew install postgresql` on macOS)
+- `.env.local` file with `DATABASE_URL` set
+- `psql` in PATH (`which psql` to verify)
+
+**Troubleshooting:**
+- If `psql` not found: `brew install postgresql`
+- If connection fails: Verify `DATABASE_URL` in `.env.local`
+- If permission denied: Check service role key is correct
+
+#### Method 2: Supabase SQL Editor (Browser-Based)
+
+**Use this when psql is not available or for interactive queries:**
+
 1. Go to: [Supabase SQL Editor](https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik/sql/new)
 2. Open the migration file from `scripts/migrations/`
 3. Copy the entire SQL content
@@ -587,15 +628,16 @@ DATABASE_URL="postgresql://postgres:[PASSWORD]@db.vnuithaqtpgbwmdvtxik.supabase.
 
 **Example:**
 ```bash
-# To run migration 06:
-# 1. Open: scripts/migrations/06-add-bunq-oauth-support.sql
+# To run migration 29:
+# 1. Open: scripts/migrations/29-create-plaid-storage.sql
 # 2. Copy all contents
 # 3. Paste in SQL Editor: https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik/sql/new
 # 4. Click Run
 ```
 
-#### Method 2: TypeScript Scripts (For Data Operations)
-For data manipulation (NOT schema changes), use TypeScript scripts:
+#### Method 3: TypeScript Scripts (For Data Operations ONLY)
+
+**Use for data manipulation (NOT schema changes):**
 
 ```bash
 # Run data generation scripts
@@ -608,17 +650,7 @@ npx tsx scripts/utilities/backfill-exchange-rates.ts
 npx tsx scripts/utilities/verify-test-user.ts
 ```
 
-**These scripts use the Supabase client library** (`lib/supabase.ts`) with the service role key.
-
-#### ⚠️ Method 3: CLI (Currently Not Working)
-The Supabase CLI commands for remote execution are currently not functional in this environment due to connection issues. **DO NOT USE:**
-
-```bash
-# ❌ These do NOT work:
-# supabase db execute --file migration.sql
-# supabase db push
-# psql $DATABASE_URL < migration.sql
-```
+**Note:** These scripts require `.env.local` to be loaded properly and use the Supabase client library (`lib/supabase.ts`) with the service role key.
 
 ---
 
