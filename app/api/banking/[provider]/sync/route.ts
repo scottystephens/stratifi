@@ -25,6 +25,7 @@ import {
   calculateSyncMetrics,
   formatSyncMetrics,
 } from '@/lib/services/transaction-sync-service';
+import { performPlaidSync } from '@/lib/services/plaid-sync-service';
 
 export async function POST(
   req: NextRequest,
@@ -42,9 +43,6 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Get the banking provider
-    const provider = getProvider(providerId);
 
     // Parse request body
     const body = await req.json();
@@ -80,6 +78,85 @@ export async function POST(
     if (connectionError || !connection) {
       return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
     }
+
+    // 🚀 Use Optimized Plaid Sync Service if provider is Plaid
+    if (providerId === 'plaid') {
+      console.log('🚀 Using optimized Plaid sync service...');
+      
+      // Get active token
+      const { data: tokenData } = await supabase
+        .from('provider_tokens')
+        .select('access_token')
+        .eq('connection_id', connectionId)
+        .eq('provider_id', 'plaid')
+        .eq('status', 'active')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!tokenData?.access_token) {
+        throw new Error('No active Plaid access token found');
+      }
+
+      // Create ingestion job for tracking
+      const ingestionJob = await createIngestionJob({
+        tenant_id: tenantId,
+        connection_id: connectionId,
+        job_type: 'plaid_sync',
+        status: 'running',
+      });
+
+      try {
+        const result = await performPlaidSync(
+          tenantId,
+          connectionId,
+          tokenData.access_token,
+          {
+            syncAccounts,
+            syncTransactions,
+            forceFullSync: forceSync,
+            importJobId: ingestionJob.id,
+          }
+        );
+
+        // Update job status
+        await updateIngestionJob(ingestionJob.id, {
+          status: result.success ? 'completed' : 'completed_with_errors',
+          records_fetched: result.accountsSynced + (result.transactionsAdded || 0),
+          records_imported: result.accountsSynced + (result.transactionsImported || 0),
+          records_failed: (result.errors?.length || 0),
+          completed_at: new Date().toISOString(),
+          summary: result,
+        });
+
+        // Update connection last_sync_at
+        await updateConnection(tenantId, connectionId, {
+          last_sync_at: new Date().toISOString(),
+        });
+
+        return NextResponse.json({
+          success: result.success,
+          message: `Synced ${result.accountsSynced} accounts and ${result.transactionsImported} transactions`,
+          summary: result,
+          jobId: ingestionJob.id,
+        });
+      } catch (error) {
+        // Update job as failed
+        await updateIngestionJob(ingestionJob.id, {
+          status: 'failed',
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+          completed_at: new Date().toISOString(),
+        });
+        throw error;
+      }
+    }
+
+    // ==========================================
+    // Generic Sync Logic (for other providers)
+    // ==========================================
+    
+    // Get the banking provider
+    const provider = getProvider(providerId);
 
     // Create ingestion job
     const ingestionJob = await createIngestionJob({
@@ -548,4 +625,3 @@ export async function POST(
     );
   }
 }
-
