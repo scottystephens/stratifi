@@ -29,6 +29,8 @@ export async function GET(req: NextRequest) {
 
     // Get single account or all accounts
     if (accountId) {
+      // Try to query by both account_id (TEXT primary key) and id (UUID)
+      // This allows the API to work with both ID formats
       const { data, error } = await supabase
         .from('accounts')
         .select(`
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
           )
         `)
         .eq('tenant_id', tenantId)
-        .eq('account_id', accountId) // Use account_id (primary key in database)
+        .or(`account_id.eq.${accountId},id.eq.${accountId}`) // Match either account_id (TEXT) or id (UUID)
         .order('statement_date', {
           ascending: false,
           foreignTable: 'account_statements_account_id_fkey',
