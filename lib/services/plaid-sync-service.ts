@@ -11,10 +11,9 @@
  * 4. Handles added/modified/removed transactions
  */
 
-import { supabase, upsertAccountStatement } from '@/lib/supabase';
+import { supabase, upsertAccountStatement, convertAmountToUsd } from '@/lib/supabase';
 import { plaidClient } from '@/lib/plaid';
 import type { Transaction as PlaidTransaction, AccountBase as PlaidAccount } from 'plaid';
-import { convertAmountToUsd } from '@/lib/currency';
 
 export interface PlaidSyncResult {
   success: boolean;

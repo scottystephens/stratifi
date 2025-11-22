@@ -33,9 +33,8 @@ export function EditAccountModal({
     account_type: account.account_type || '',
     currency: account.currency || 'USD',
     iban: account.iban || '',
-    swift: account.swift || '',
-    sort_code: account.sort_code || '',
-    routing_number: account.routing_number || '',
+    bic: account.bic || '',
+    account_holder_name: account.account_holder_name || '',
     notes: account.notes || '',
   });
 
@@ -204,30 +203,21 @@ export function EditAccountModal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SWIFT/BIC</label>
+                <label className="block text-sm font-medium mb-1">BIC/SWIFT</label>
                 <input
                   type="text"
                   className="w-full border rounded-lg px-3 py-2"
-                  value={formData.swift}
-                  onChange={(e) => setFormData({ ...formData, swift: e.target.value })}
+                  value={formData.bic}
+                  onChange={(e) => setFormData({ ...formData, bic: e.target.value })}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Sort Code</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Account Holder Name</label>
                 <input
                   type="text"
                   className="w-full border rounded-lg px-3 py-2"
-                  value={formData.sort_code}
-                  onChange={(e) => setFormData({ ...formData, sort_code: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Routing Number</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg px-3 py-2"
-                  value={formData.routing_number}
-                  onChange={(e) => setFormData({ ...formData, routing_number: e.target.value })}
+                  value={formData.account_holder_name}
+                  onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
                 />
               </div>
             </div>
