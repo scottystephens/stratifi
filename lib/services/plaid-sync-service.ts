@@ -92,6 +92,14 @@ export async function syncPlaidAccounts(
         }
 
         if (normalizedAccount) {
+          // ✨ CRITICAL: Link Plaid account to Stratifi account
+          // This is required for transaction import to work
+          await supabase
+            .from('plaid_accounts')
+            .update({ stratifi_account_id: normalizedAccount.id })
+            .eq('connection_id', connectionId)
+            .eq('account_id', account.account_id);
+
           // Create daily balance statement
           const currency = account.balances.iso_currency_code || normalizedAccount.currency || 'USD';
           const endingBalance = account.balances.current || 0;
