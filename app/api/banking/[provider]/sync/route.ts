@@ -17,6 +17,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { provider: string } }
 ) {
+  console.log(`🔄 SYNC REQUEST STARTED: provider=${params.provider}, url=${req.url}`);
+
   try {
     const providerId = params.provider;
 
@@ -47,6 +49,8 @@ export async function POST(
 
     // Parse request body
     const body = await req.json();
+    console.log(`📋 SYNC REQUEST BODY:`, JSON.stringify(body, null, 2));
+
     const {
       connectionId,
       tenantId,
@@ -57,7 +61,10 @@ export async function POST(
       accountIds, // Optional: specific accounts to sync
     } = body;
 
+    console.log(`🔑 SYNC PARAMS: connectionId=${connectionId}, tenantId=${tenantId}, syncAccounts=${syncAccounts}, syncTransactions=${syncTransactions}`);
+
     if (!connectionId || !tenantId) {
+      console.log(`❌ SYNC VALIDATION FAILED: Missing connectionId or tenantId`);
       return NextResponse.json(
         { error: 'Connection ID and Tenant ID are required' },
         { status: 400 }
@@ -158,6 +165,7 @@ export async function POST(
       // SINGLE LINE: Universal sync for ALL providers
       // ==========================================
 
+      console.log(`🚀 CALLING SYNC ORCHESTRATOR: provider=${providerId}, connection=${connectionId}`);
       const result = await orchestrateSync({
         provider,
         connectionId,
