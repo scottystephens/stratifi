@@ -44,6 +44,55 @@ export async function syncTinkAccounts(
     const tinkAccounts = await TinkClient.getAccounts(accessToken);
     console.log(`✅ Retrieved ${tinkAccounts.length} accounts from Tink`);
 
+    // Create institution mapping (same as TinkProvider)
+    const mapTinkInstitutionIdToName = (institutionId: string): string => {
+      const bankMap: Record<string, string> = {
+        'abnamro': 'ABN AMRO',
+        'ing-nl': 'ING Bank',
+        'rabobank': 'Rabobank',
+        'asnbank': 'ASN Bank',
+        'bunq': 'bunq',
+        'knab': 'Knab',
+        'regiobank': 'RegioBank',
+        'sns': 'SNS Bank',
+        'triodos': 'Triodos Bank',
+        'vanlanschot': 'Van Lanschot',
+        'revolut': 'Revolut',
+        'n26': 'N26',
+        'monzo': 'Monzo',
+        'starling': 'Starling Bank',
+        'hsbc': 'HSBC',
+        'barclays': 'Barclays',
+        'lloyds': 'Lloyds Bank',
+        'natwest': 'NatWest',
+        'santander': 'Santander',
+        'deutschebank': 'Deutsche Bank',
+        'commerzbank': 'Commerzbank',
+        'bnpparibas': 'BNP Paribas',
+        'creditmutuel': 'Crédit Mutuel',
+        'societegenerale': 'Société Générale',
+        'intesa': 'Intesa Sanpaolo',
+        'unicredit': 'UniCredit',
+      };
+      
+      const lowerKey = institutionId.toLowerCase();
+      return bankMap[lowerKey] || institutionId.charAt(0).toUpperCase() + institutionId.slice(1);
+    };
+
+    // Build institution cache using simple mapping
+    const institutionCache = new Map<string, {id: string; name: string}>();
+    
+    for (const account of tinkAccounts) {
+      if (account.financialInstitutionId && !institutionCache.has(account.financialInstitutionId)) {
+        const institutionName = mapTinkInstitutionIdToName(account.financialInstitutionId);
+        institutionCache.set(account.financialInstitutionId, {
+          id: account.financialInstitutionId,
+          name: institutionName,
+        });
+        console.log(`🏦 Institution ${account.financialInstitutionId} → ${institutionName}`);
+      }
+    }
+
     // Store raw Tink account data
     for (const account of tinkAccounts) {
       try {
@@ -119,6 +168,33 @@ export async function syncTinkAccounts(
             .update({ stratifi_account_id: normalizedAccount.id })
             .eq('connection_id', connectionId)
             .eq('account_id', account.id);
+
+          // ✨ Update account with institution information (if available)
+          if (account.financialInstitutionId) {
+            const institution = institutionCache.get(account.financialInstitutionId);
+            if (institution) {
+              try {
+                const updatedCustomFields = {
+                  ...((normalizedAccount as any).custom_fields || {}),
+                  institution_name: institution.name,
+                  institution_id: institution.id,
+                };
+
+                await supabase
+                  .from('accounts')
+                  .update({
+                    bank_name: institution.name,
+                    custom_fields: updatedCustomFields,
+                  })
+                  .eq('id', normalizedAccount.id);
+
+                console.log(`✅ Updated account ${normalizedAccount.account_name} with bank: ${institution.name}`);
+              } catch (updateError) {
+                console.warn(`⚠️  Failed to update account with institution info:`, updateError);
+                // Don't fail the whole sync
+              }
+            }
+          }
 
           // Create daily balance statement
           const currency = currencyCode || normalizedAccount.currency || 'EUR';

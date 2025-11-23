@@ -48,6 +48,109 @@ export async function syncPlaidAccounts(
     const plaidAccounts = response.data.accounts;
     console.log(`✅ Retrieved ${plaidAccounts.length} accounts from Plaid`);
 
+    // Fetch institution details for bank_name
+    let institutionName: string | undefined;
+    let institutionId: string | undefined;
+    let institutionUrl: string | undefined;
+    let institutionLogo: string | undefined;
+    let institutionMetadata: Record<string, any> | undefined;
+
+    try {
+      console.log('🔍 Fetching Item to get institution_id...');
+      const itemResponse = await plaidClient.itemGet({
+        access_token: accessToken,
+      });
+
+      const item = itemResponse.data.item;
+      console.log(`✅ Item ID: ${item.item_id}`);
+      console.log(`📍 Institution ID: ${item.institution_id || 'null (Sandbox may not provide this)'}`);
+
+      if (item.institution_id) {
+        console.log(`🔍 Fetching institution details for: ${item.institution_id}`);
+        
+        const { CountryCode } = await import('plaid');
+        const PLAID_COUNTRY_CODES: any[] = [
+          'US', 'CA', 'GB', 'IE', 'FR', 'ES', 'NL', 'DE', 'IT', 'PL',
+          'BE', 'AT', 'DK', 'FI', 'NO', 'SE', 'EE', 'LT', 'LV'
+        ];
+        
+        const institutionResponse = await plaidClient.institutionsGetById({
+          institution_id: item.institution_id,
+          country_codes: PLAID_COUNTRY_CODES,
+          options: {
+            include_optional_metadata: true,
+          },
+        });
+
+        const institution = institutionResponse.data.institution;
+        institutionName = institution.name;
+        institutionId = institution.institution_id;
+        institutionUrl = institution.url || undefined;
+        institutionLogo = institution.logo ? `data:image/png;base64,${institution.logo}` : undefined;
+        institutionMetadata = {
+          products: institution.products,
+          country_codes: institution.country_codes,
+          routing_numbers: institution.routing_numbers,
+          oauth: institution.oauth,
+          primary_color: institution.primary_color,
+          status: institution.status,
+        };
+        
+        console.log(`✅ Institution: ${institutionName}`);
+      } else {
+        console.warn('⚠️  Plaid Item has no institution_id (common in Sandbox mode)');
+      }
+    } catch (instError) {
+      console.error('❌ Failed to fetch institution details:', instError);
+      // Don't fail the whole sync, just continue without institution name
+    }
+
+    // Update all existing accounts with institution information (if we have it)
+    if (institutionName) {
+      try {
+        console.log(`📝 Updating existing accounts with bank_name: ${institutionName}...`);
+        
+        const { data: accountsToUpdate, error: fetchError } = await supabase
+          .from('accounts')
+          .select('id, bank_name, custom_fields')
+          .eq('tenant_id', tenantId)
+          .eq('connection_id', connectionId)
+          .eq('provider_id', 'plaid');
+
+        if (fetchError) {
+          console.error('❌ Failed to fetch accounts for update:', fetchError);
+        } else if (accountsToUpdate && accountsToUpdate.length > 0) {
+          for (const existingAccount of accountsToUpdate) {
+            const updatedCustomFields = {
+              ...((existingAccount.custom_fields as any) || {}),
+              institution_name: institutionName,
+              institution_id: institutionId,
+              institution_url: institutionUrl,
+              institution_logo: institutionLogo,
+              institution_metadata: institutionMetadata,
+            };
+
+            const { error: updateError } = await supabase
+              .from('accounts')
+              .update({
+                bank_name: institutionName,
+                custom_fields: updatedCustomFields,
+              })
+              .eq('id', existingAccount.id);
+
+            if (updateError) {
+              console.error(`❌ Failed to update account ${existingAccount.id}:`, updateError);
+            } else {
+              console.log(`✅ Updated account ${existingAccount.id} with bank_name: ${institutionName}`);
+            }
+          }
+        }
+      } catch (updateError) {
+        console.error('❌ Failed to update accounts with institution info:', updateError);
+        // Don't fail the whole sync
+      }
+    }
+
     // Store raw Plaid account data AND create daily statement records
     for (const account of plaidAccounts) {
       try {
