@@ -257,11 +257,75 @@ export default function ConnectionDetailPage() {
   async function handleSync() {
     if (!currentTenant || !connection || !connection.provider) return;
 
+    // Show starting toast
+    toast.info('Sync started', {
+      description: 'Fetching your accounts and transactions. This may take a few moments.',
+      duration: 5000,
+    });
+
+    // Add a temporary "running" job to the UI immediately
+    const tempJob: IngestionJob = {
+      id: 'temp-' + Date.now(),
+      job_type: `${connection.provider}_sync`,
+      status: 'running',
+      records_fetched: null,
+      records_imported: null,
+      records_failed: null,
+      error_message: null,
+      created_at: new Date().toISOString(),
+      started_at: new Date().toISOString(),
+      completed_at: null,
+    };
+    setJobs([tempJob, ...jobs]);
+
     syncMutation.mutate({
       provider: connection.provider,
       connectionId: connection.id,
       tenantId: currentTenant.id,
       forceSync: true,
+    }, {
+      onSuccess: (data) => {
+        // Remove temp job and fetch real jobs
+        setJobs(jobs.filter(j => !j.id.startsWith('temp-')));
+        
+        // Fetch updated job list
+        fetch(`/api/connections/jobs?connectionId=${connectionId}&tenantId=${currentTenant.id}`)
+          .then(res => res.json())
+          .then(jobData => {
+            if (jobData.success) {
+              setJobs(jobData.jobs || []);
+            }
+          })
+          .catch(console.error);
+
+        // Show success toast
+        const accountsCount = data.summary?.accountsSynced || 0;
+        const transactionsCount = data.summary?.transactionsSynced || 0;
+        
+        toast.success('Sync complete!', {
+          description: `${accountsCount} accounts synced, ${transactionsCount} transactions imported`,
+          duration: 5000,
+        });
+
+        // Refresh all data
+        queryClient.invalidateQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+        queryClient.invalidateQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+        // Refetch immediately
+        queryClient.refetchQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+        queryClient.refetchQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+      },
+      onError: (error) => {
+        // Remove temp job
+        setJobs(jobs.filter(j => !j.id.startsWith('temp-')));
+        
+        toast.error('Sync failed', {
+          description: error instanceof Error ? error.message : 'Unknown error occurred',
+          duration: 7000,
+        });
+      },
     });
   }
 
