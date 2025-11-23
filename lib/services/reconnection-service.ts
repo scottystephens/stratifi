@@ -330,22 +330,28 @@ export async function linkConnectionToTransactions(
 ): Promise<{ success: boolean; linkedCount: number }> {
   console.log(`[Reconnection] Linking transactions for ${accountIds.length} accounts to connection ${newConnectionId}`);
 
-  const { count, error } = await supabase
+  // First get the count
+  const { count: txCount } = await supabase
+    .from('transactions')
+    .select('*', { count: 'exact', head: true })
+    .in('account_id', accountIds);
+
+  // Then do the update
+  const { error } = await supabase
     .from('transactions')
     .update({
       connection_id: newConnectionId,
       updated_at: new Date().toISOString(),
     })
-    .in('account_id', accountIds)
-    .select('*', { count: 'exact', head: true });
+    .in('account_id', accountIds);
 
   if (error) {
     console.error('[Reconnection] Failed to link transactions:', error);
     return { success: false, linkedCount: 0 };
   }
 
-  console.log(`[Reconnection] Successfully linked ${count || 0} transactions to new connection`);
-  return { success: true, linkedCount: count || 0 };
+  console.log(`[Reconnection] Successfully linked ${txCount || 0} transactions to new connection`);
+  return { success: true, linkedCount: txCount || 0 };
 }
 
 /**

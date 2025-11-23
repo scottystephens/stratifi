@@ -162,11 +162,11 @@ export async function POST(req: NextRequest) {
             const reconnectionMatch = await detectReconnection({
               tenantId: connection.tenant_id,
               providerId,
-              institutionId: rawAccounts.institution?.id,
-              institutionName: rawAccounts.institution?.name,
-              externalAccountIds: rawAccounts.accounts.map((acc: any) => acc.account_id),
-              accountNumbers: rawAccounts.accounts.map((acc: any) => acc.mask || acc.account?.mask).filter(Boolean),
-              ibans: rawAccounts.accounts.map((acc: any) => acc.iban).filter(Boolean),
+              institutionId: rawAccounts.institutionData?.id || rawAccounts.institutionData?.institution_id,
+              institutionName: rawAccounts.institutionData?.name,
+              externalAccountIds: (rawAccounts.rawData as any).accounts?.map((acc: any) => acc.account_id) || [],
+              accountNumbers: (rawAccounts.rawData as any).accounts?.map((acc: any) => acc.mask || acc.account?.mask).filter(Boolean) || [],
+              ibans: (rawAccounts.rawData as any).accounts?.map((acc: any) => acc.iban).filter(Boolean) || [],
             });
 
             let syncStartDate: string | undefined;
