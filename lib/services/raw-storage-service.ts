@@ -63,24 +63,66 @@ export class RawStorageService {
 
   /**
    * Store complete Plaid transactions response in JSONB format
+   * Handles /transactions/sync response with added/modified/removed arrays
    */
   async storePlaidTransactions(response: RawTransactionsResponse): Promise<void> {
     const { connectionId, tenantId, rawData } = response;
     const plaidResponse = rawData as any;
 
-    console.log(`[RawStorage] Storing ${plaidResponse.transactions?.length || 0} Plaid transactions for connection ${connectionId}`);
+    // Handle sync response structure with added/modified/removed arrays
+    const added = plaidResponse.added || [];
+    const modified = plaidResponse.modified || [];
+    const removed = plaidResponse.removed || [];
 
-    const txRecords = plaidResponse.transactions?.map((tx: any) => ({
-      tenant_id: tenantId,
-      connection_id: connectionId,
-      transaction_id: tx.transaction_id,
-      account_id: tx.account_id,
-      raw_transaction_data: tx,  // COMPLETE transaction object
-      amount: tx.amount,
-      date: tx.date,
-      posted: tx.pending === false,
-      last_updated_at: new Date().toISOString(),
-    })) || [];
+    const totalTransactions = added.length + modified.length + removed.length;
+    console.log(`[RawStorage] Storing ${totalTransactions} Plaid transactions for connection ${connectionId} (added: ${added.length}, modified: ${modified.length}, removed: ${removed.length})`);
+
+    const txRecords: any[] = [];
+
+    // Process added transactions
+    added.forEach((tx: any) => {
+      txRecords.push({
+        tenant_id: tenantId,
+        connection_id: connectionId,
+        transaction_id: tx.transaction_id,
+        account_id: tx.account_id,
+        raw_transaction_data: { ...tx, _sync_type: 'added' },  // COMPLETE transaction object with sync type
+        amount: tx.amount,
+        date: tx.date,
+        posted: tx.pending === false,
+        last_updated_at: new Date().toISOString(),
+      });
+    });
+
+    // Process modified transactions
+    modified.forEach((tx: any) => {
+      txRecords.push({
+        tenant_id: tenantId,
+        connection_id: connectionId,
+        transaction_id: tx.transaction_id,
+        account_id: tx.account_id,
+        raw_transaction_data: { ...tx, _sync_type: 'modified' },  // COMPLETE transaction object with sync type
+        amount: tx.amount,
+        date: tx.date,
+        posted: tx.pending === false,
+        last_updated_at: new Date().toISOString(),
+      });
+    });
+
+    // Process removed transactions (mark as inactive/deleted)
+    removed.forEach((tx: any) => {
+      txRecords.push({
+        tenant_id: tenantId,
+        connection_id: connectionId,
+        transaction_id: tx.transaction_id,
+        account_id: tx.account_id,
+        raw_transaction_data: { ...tx, _sync_type: 'removed' },  // COMPLETE transaction object with sync type
+        amount: tx.amount,
+        date: tx.date,
+        posted: tx.pending === false,
+        last_updated_at: new Date().toISOString(),
+      });
+    });
 
     if (txRecords.length === 0) {
       console.warn(`[RawStorage] No transactions found in Plaid response for connection ${connectionId}`);
@@ -101,7 +143,7 @@ export class RawStorageService {
       await this.updatePlaidCursor(connectionId, tenantId, response.pagination);
     }
 
-    console.log(`[RawStorage] Successfully stored ${txRecords.length} Plaid transactions with full raw data`);
+    console.log(`[RawStorage] Successfully stored ${txRecords.length} Plaid transactions with full raw data (${added.length} added, ${modified.length} modified, ${removed.length} removed)`);
   }
 
   /**

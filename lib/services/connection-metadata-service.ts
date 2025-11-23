@@ -254,23 +254,44 @@ export async function updateConnectionMetadata(
 /**
  * Refreshes all connection metadata (stats + health)
  * Called after successful sync operations
+ * 
+ * @param connectionId - The connection to refresh metadata for
+ * @param retries - Number of retry attempts (default: 3)
+ * @param delayMs - Delay between retries in milliseconds (default: 500ms)
  */
-export async function refreshConnectionMetadata(connectionId: string): Promise<void> {
-  try {
-    console.log(`🔄 Refreshing metadata for connection ${connectionId}`);
+export async function refreshConnectionMetadata(
+  connectionId: string,
+  retries: number = 3,
+  delayMs: number = 500
+): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`🔄 Refreshing metadata for connection ${connectionId} (attempt ${attempt}/${retries})`);
 
-    // Calculate stats and health in parallel
-    const [stats, healthScore] = await Promise.all([
-      getConnectionStats(connectionId),
-      calculateHealthScore(connectionId),
-    ]);
+      // Calculate stats and health in parallel
+      const [stats, healthScore] = await Promise.all([
+        getConnectionStats(connectionId),
+        calculateHealthScore(connectionId),
+      ]);
 
-    // Update database
-    await updateConnectionMetadata(connectionId, stats, healthScore);
+      // Update database
+      await updateConnectionMetadata(connectionId, stats, healthScore);
 
-    console.log(`✅ Metadata refreshed: ${stats.totalAccounts} accounts, health ${healthScore}`);
-  } catch (error) {
-    console.error('Error refreshing connection metadata:', error);
+      console.log(`✅ Metadata refreshed: ${stats.totalAccounts} accounts, ${stats.totalTransactions} transactions, health ${healthScore}`);
+      return; // Success - exit retry loop
+    } catch (error) {
+      console.error(`❌ Error refreshing connection metadata (attempt ${attempt}/${retries}):`, error);
+      
+      // If not the last attempt, wait before retrying
+      if (attempt < retries) {
+        console.log(`⏳ Waiting ${delayMs}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        // Exponential backoff
+        delayMs = delayMs * 1.5;
+      } else {
+        console.error('❌ Failed to refresh connection metadata after all retries');
+      }
+    }
   }
 }
 

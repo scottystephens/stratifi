@@ -153,15 +153,17 @@ export default function ConnectionDetailPage() {
             setIsSyncing(false);
             clearInterval(pollInterval);
             
-            // Invalidate all related queries to refresh UI
-            queryClient.invalidateQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
-            queryClient.invalidateQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            
-            // Refetch immediately to update UI
-            queryClient.refetchQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
-            queryClient.refetchQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+            // Wait a moment for metadata refresh to complete, then invalidate all related queries to refresh UI
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+              queryClient.invalidateQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+              queryClient.invalidateQueries({ queryKey: ['transactions'] });
+              queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+              // Refetch immediately to update UI
+              queryClient.refetchQueries({ queryKey: ['accounts', 'list', currentTenant.id] });
+              queryClient.refetchQueries({ queryKey: ['connections', 'detail', currentTenant.id, connectionId] });
+            }, 2000); // Wait 2 seconds for metadata refresh (increased from 1 second)
             
             // Refresh provider accounts and jobs
             fetch(`/api/banking/accounts?connectionId=${connectionId}&tenantId=${currentTenant.id}`)

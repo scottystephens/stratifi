@@ -144,11 +144,10 @@ export function useSyncConnection() {
         queryKey: connectionKeys.detail(variables.tenantId, variables.connectionId),
       });
       
-      const accountsCount = data.summary?.accountsSynced || 0;
-      const transactionsCount = data.summary?.transactionsSynced || 0;
-      
-      toast.success('Sync complete!', {
-        description: `${accountsCount} accounts synced, ${transactionsCount} transactions imported`,
+      // Show initial toast - job has started, not completed yet
+      toast.info('Sync started', {
+        description: 'Fetching your accounts and transactions. This may take a few moments.',
+        duration: 5000,
       });
     },
     onError: (error) => {

@@ -132,7 +132,12 @@ export class NormalizationService {
         counterpartyName: tx.merchant_name || tx.name,
         counterpartyAccount: tx.account_owner,
         reference: tx.transaction_id,
-        category: tx.category?.join(' > '),
+        category: (() => {
+          const rawCategory = tx.category;
+          const processedCategory = rawCategory?.join(' > ') || 'Uncategorized';
+          console.log(`[Normalization] Transaction ${tx.transaction_id}: raw category =`, rawCategory, '-> processed =', processedCategory);
+          return processedCategory;
+        })(),
         metadata: {
           pending: tx.pending,
           payment_channel: tx.payment_channel,

@@ -189,18 +189,18 @@ export default function ConnectionsPage() {
       <Navigation />
       
       <main className="flex-1 overflow-y-auto bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">Data Connections</h1>
-              <p className="text-muted-foreground mt-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold truncate">Data Connections</h1>
+              <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                 Manage your data import connections
               </p>
             </div>
             <Button
               onClick={() => router.push('/connections/new')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 shrink-0"
             >
               <Plus className="h-4 w-4" />
               New Connection
@@ -233,53 +233,46 @@ export default function ConnectionsPage() {
 
           {/* Connections Grid */}
           {!loading && connections.length > 0 && (
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {connections.map((connection: Connection) => (
-                <Card key={connection.id} className="p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 ${getConnectionColor(connection.connection_type)} rounded-lg`}>
+                <Card 
+                  key={connection.id} 
+                  className="p-4 sm:p-6 hover:shadow-lg transition-all cursor-pointer flex flex-col"
+                  onClick={() => router.push(`/connections/${connection.id}`)}
+                >
+                  <div className="flex items-start justify-between mb-4 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`p-2 ${getConnectionColor(connection.connection_type)} rounded-lg shrink-0`}>
                         {getConnectionIcon(connection.connection_type)}
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{connection.name}</h3>
-                        <p className="text-sm text-muted-foreground uppercase">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold truncate" title={connection.name}>
+                          {connection.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground uppercase truncate">
                           {connection.connection_type.replace('_', ' ')}
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      {connection.provider && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSyncBankingProvider(connection.id, connection.provider!)}
-                          disabled={syncing === connection.id}
-                          title="Sync now"
-                        >
-                          <RefreshCw
-                            className={`h-4 w-4 text-blue-600 ${
-                              syncing === connection.id ? 'animate-spin' : ''
-                            }`}
-                          />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(connection.id)}
-                        disabled={deleting === connection.id}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(connection.id);
+                      }}
+                      disabled={deleting === connection.id}
+                      className="shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Status</span>
+                  <div className="space-y-3 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-muted-foreground shrink-0">Status</span>
                       <Badge 
-                        className={getStatusColor(connection.status)}
+                        className={`${getStatusColor(connection.status)} text-xs truncate max-w-[120px]`}
                         title={connection.status === 'error' && connection.last_error ? connection.last_error : undefined}
                       >
                         {connection.status}
@@ -288,54 +281,35 @@ export default function ConnectionsPage() {
 
                     {/* Show error message if exists */}
                     {connection.status === 'error' && connection.last_error && (
-                      <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2">
-                        <strong>Error:</strong> {connection.last_error}
+                      <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2 break-words">
+                        <strong>Error:</strong> <span className="break-all">{connection.last_error}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Data Type</span>
-                      <div className="flex gap-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-muted-foreground shrink-0">Data Type</span>
+                      <div className="flex gap-1 flex-wrap justify-end">
                         {getDataTypeBadges(connection).map((badge, idx) => (
-                          <Badge key={idx} className={`${badge.color} text-xs`}>
+                          <Badge key={idx} className={`${badge.color} text-xs whitespace-nowrap`}>
                             {badge.icon} {badge.label}
                           </Badge>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Import Mode</span>
-                      <span className="text-sm font-medium capitalize">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-muted-foreground shrink-0">Import Mode</span>
+                      <span className="text-sm font-medium capitalize truncate">
                         {connection.import_mode}
                       </span>
                     </div>
 
                     {connection.last_sync_at && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        Last sync: {new Date(connection.last_sync_at).toLocaleDateString()}
+                        <Calendar className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Last sync: {new Date(connection.last_sync_at).toLocaleDateString()}</span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/connections/${connection.id}`)}
-                      className="flex-1"
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/connections/${connection.id}/history`)}
-                      className="flex-1"
-                    >
-                      History
-                    </Button>
                   </div>
                 </Card>
               ))}

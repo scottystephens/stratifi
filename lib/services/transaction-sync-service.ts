@@ -340,7 +340,11 @@ export async function batchCreateOrUpdateTransactions(
         counterparty_name: tx.counterpartyName,
         counterparty_account: tx.counterpartyAccount,
         reference: tx.reference,
-        category: tx.category,
+        category: (() => {
+          const finalCategory = tx.category || 'Uncategorized';
+          console.log(`[TransactionSync] Transaction ${tx.externalTransactionId}: final category =`, finalCategory);
+          return finalCategory;
+        })(),
         metadata: tx.metadata || {},
         created_by: userId,
         updated_at: new Date().toISOString(),

@@ -302,6 +302,12 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
         })
         .eq('id', connectionId);
 
+      // Refresh connection metadata (total_accounts, total_transactions, etc.)
+      console.log('[SyncOrchestrator] Refreshing connection metadata...');
+      const { refreshConnectionMetadata } = await import('./connection-metadata-service');
+      await refreshConnectionMetadata(connectionId);
+      console.log('[SyncOrchestrator] Connection metadata refreshed successfully');
+
     } catch (statusError) {
       console.error('[SyncOrchestrator] Failed to update connection status:', statusError);
       // Don't add to errors array as this is not a critical failure
