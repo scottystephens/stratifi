@@ -150,7 +150,7 @@ async function findAccountsByExternalId(
     .from('accounts')
     .select('*')
     .eq('tenant_id', tenantId)
-    .eq('provider', providerId)
+    .eq('provider_id', providerId)
     .in('external_account_id', externalAccountIds);
 
   return accounts || [];
@@ -169,7 +169,7 @@ async function findAccountsByInstitution(
     .from('accounts')
     .select('*')
     .eq('tenant_id', tenantId)
-    .eq('provider', providerId)
+    .eq('provider_id', providerId)
     .eq('institution_id', institutionId)
     .in('account_number', accountNumbers);
 
@@ -201,7 +201,7 @@ async function findAccountsByInstitutionName(
     .from('accounts')
     .select('*')
     .eq('tenant_id', tenantId)
-    .eq('provider', providerId)
+    .eq('provider_id', providerId)
     .ilike('bank_name', `%${institutionName}%`);
 
   return accounts || [];
