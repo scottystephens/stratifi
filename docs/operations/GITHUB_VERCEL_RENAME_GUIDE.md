@@ -1,6 +1,6 @@
 # GitHub & Vercel Rename Guide
 
-Complete guide to rename the repository and Vercel project from `treasuryx` to `stratifi`.
+Complete guide to rename the repository and Vercel project from `treasuryx` to `stratiri`.
 
 ---
 
@@ -16,11 +16,11 @@ Complete guide to rename the repository and Vercel project from `treasuryx` to `
 
 4. Click **"Rename repository"**
 
-5. Enter new name: `stratifi`
+5. Enter new name: `stratiri`
 
 6. Click **"I understand, rename repository"**
 
-**Result**: Repository will be at https://github.com/scottystephens/stratifi
+**Result**: Repository will be at https://github.com/scottystephens/stratiri
 
 ### Update Local Git Remote
 
@@ -30,7 +30,7 @@ After renaming on GitHub, update your local repository:
 cd /Users/scottstephens/treasuryx
 
 # Update remote URL
-git remote set-url origin https://github.com/scottystephens/stratifi.git
+git remote set-url origin https://github.com/scottystephens/stratiri.git
 
 # Verify
 git remote -v
@@ -54,27 +54,27 @@ git remote -v
 
 5. Click **"Edit"** next to project name
 
-6. Enter new name: `stratifi`
+6. Enter new name: `stratiri`
 
 7. Click **"Save"**
 
-**Result**: Project will be at https://vercel.com/scottystephens-projects/stratifi
+**Result**: Project will be at https://vercel.com/scottystephens-projects/stratiri
 
 ### Production URL
 
 After renaming, your production URL options:
 
 **Option A - Keep current domain:**
-- URL stays: `https://stratifi.vercel.app`
+- URL stays: `https://stratiri.vercel.app`
 - Works fine, matches project name
 
 **Option B - Use new auto-generated domain:**
-- New URL: `https://stratifi.vercel.app` (or `stratifi-xxxx.vercel.app`)
+- New URL: `https://stratiri.vercel.app` (or `stratiri-xxxx.vercel.app`)
 - Go to Settings → Domains
-- Add `stratifi.vercel.app` as primary domain
+- Add `stratiri.vercel.app` as primary domain
 
 **Option C - Custom domain (recommended for production):**
-- Buy: `stratifi.com` or similar
+- Buy: `stratiri.com` or similar
 - Add in Settings → Domains
 - Update DNS records
 - Professional branded URL
@@ -87,8 +87,8 @@ After renaming, update these references:
 
 ### In README.md
 ```markdown
-- Production: https://stratifi.vercel.app (or your custom domain)
-- GitHub: https://github.com/scottystephens/stratifi
+- Production: https://stratiri.vercel.app (or your custom domain)
+- GitHub: https://github.com/scottystephens/stratiri
 ```
 
 ### In package.json
@@ -96,9 +96,9 @@ After renaming, update these references:
 {
   "repository": {
     "type": "git",
-    "url": "https://github.com/scottystephens/stratifi"
+    "url": "https://github.com/scottystephens/stratiri"
   },
-  "homepage": "https://stratifi.vercel.app"
+  "homepage": "https://stratiri.vercel.app"
 }
 ```
 
@@ -114,9 +114,9 @@ The Supabase project URLs remain the same:
 
 After completing all steps:
 
-- [ ] GitHub repository renamed to `stratifi`
+- [ ] GitHub repository renamed to `stratiri`
 - [ ] Local git remote updated
-- [ ] Vercel project renamed to `stratifi`
+- [ ] Vercel project renamed to `stratiri`
 - [ ] Production URL decided (keep old or use new)
 - [ ] README.md updated with new URLs
 - [ ] package.json updated with repository info
@@ -159,7 +159,7 @@ Update these external references:
 ## 🎉 Completion
 
 Once renamed:
-- ✅ Fully branded as Stratifi
+- ✅ Fully branded as Stratiri
 - ✅ Consistent naming everywhere
 - ✅ Professional appearance
 - ✅ No TreasuryX references remaining

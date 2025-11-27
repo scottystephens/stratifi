@@ -1,5 +1,5 @@
 /**
- * Test fixtures and utilities for Stratifi tests
+ * Test fixtures and utilities for Stratiri tests
  */
 
 import { vi } from 'vitest';

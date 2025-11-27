@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document captures key lessons learned while implementing multiple banking provider integrations (Tink, Plaid) in Stratifi. These lessons are critical for future provider integrations and system maintenance.
+This document captures key lessons learned while implementing multiple banking provider integrations (Tink, Plaid) in Stratiri. These lessons are critical for future provider integrations and system maintenance.
 
 ---
 
@@ -205,7 +205,7 @@ curl -X POST https://sandbox.plaid.com/link/token/create ...
 
 3. **Vercel logs are invaluable** for production debugging
 ```bash
-vercel logs stratifi.vercel.app --follow
+vercel logs stratiri.vercel.app --follow
 ```
 
 4. **Enhanced logging helps** during integration phase
@@ -376,7 +376,7 @@ git commit -m "feat: add NewProvider integration"
 git push
 
 # 8. Monitor
-vercel logs stratifi.vercel.app --follow
+vercel logs stratiri.vercel.app --follow
 ```
 
 ---
@@ -410,5 +410,5 @@ With this infrastructure in place, adding future providers should take:
 
 **Document Version**: 1.0  
 **Last Updated**: November 21, 2025  
-**Authors**: Stratifi Engineering Team
+**Authors**: Stratiri Engineering Team
 

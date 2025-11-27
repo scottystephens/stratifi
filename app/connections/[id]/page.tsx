@@ -118,22 +118,26 @@ export default function ConnectionDetailPage() {
   const syncMutation = useSyncConnection();
   const deleteMutation = useDeleteConnection();
 
-  // Initialize sync polling if redirected from OAuth
+  // Initialize sync if redirected from OAuth
   useEffect(() => {
-    if (syncingParam && jobIdParam) {
-      setIsSyncing(true);
-      setSyncJobId(jobIdParam);
-      toast.info('Syncing your bank data', {
-        description: 'Please wait while we fetch your accounts and transactions. This may take a few moments.',
-        duration: 10000
-      });
-      // Remove syncing param from URL
+    // Only run if we have the params AND the connection is loaded
+    if (syncingParam && connection && currentTenant && !syncMutation.isPending) {
+      // Trigger client-side sync
+      handleSync();
+
+      // Remove syncing param from URL to prevent double-trigger
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('syncing');
       newUrl.searchParams.delete('jobId');
+      newUrl.searchParams.delete('success'); // Optional: keep success message?
+      // Actually keep success/message params so the success toast (if any) or message still shows? 
+      // The backend adds success=true&message=...
+      // But handleSync adds its own toasts.
+      // Let's just remove syncing and jobId.
+      
       router.replace(newUrl.pathname + newUrl.search, { scroll: false });
     }
-  }, [syncingParam, jobIdParam, router]);
+  }, [syncingParam, connection, currentTenant, router]);
 
   // Poll for sync completion when syncing and refresh data
   useEffect(() => {

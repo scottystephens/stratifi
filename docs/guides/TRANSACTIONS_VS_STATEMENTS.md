@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stratifi supports two distinct types of bank data integrations:
+Stratiri supports two distinct types of bank data integrations:
 
 1. **Transactions** - Detailed line-item data of money movements
 2. **Statements** - Daily/periodic balance snapshots
@@ -196,7 +196,7 @@ Response:
 ```
 Bank Statement CSV
     ↓
-Upload to Stratifi
+Upload to Stratiri
     ↓
 Parse & Map Columns
     ↓

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Stratifi Admin Dashboard provides comprehensive system monitoring, tenant management, connection orchestration, and automated data sync scheduling for super admins.
+The Stratiri Admin Dashboard provides comprehensive system monitoring, tenant management, connection orchestration, and automated data sync scheduling for super admins.
 
 ## Features Implemented
 
@@ -123,13 +123,13 @@ Vercel provides a "Run Now" button for testing cron jobs in the dashboard.
 Or test via cURL:
 ```bash
 curl -X GET \
-  https://stratifi.vercel.app/api/admin/cron/health-check \
+  https://stratiri.vercel.app/api/admin/cron/health-check \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
 ## Accessing the Admin Dashboard
 
-1. **Login** to Stratifi: https://stratifi.vercel.app/login
+1. **Login** to Stratiri: https://stratiri.vercel.app/login
 2. **Navigate** to `/admin` (or click the "Admin Dashboard" link in the sidebar)
 3. **Verify** you see the amber-colored admin navigation
 

@@ -2,7 +2,7 @@
 
 **Date:** November 23, 2025  
 **Deployment:** ✅ Successful  
-**Production URL:** https://stratifi.vercel.app
+**Production URL:** https://stratiri.vercel.app
 
 ---
 
@@ -11,7 +11,7 @@
 ### Status
 ✅ **Build:** Successful  
 ✅ **Deploy:** Successful  
-✅ **Live:** https://stratifi.vercel.app
+✅ **Live:** https://stratiri.vercel.app
 
 ### What Was Deployed
 
@@ -37,7 +37,7 @@
 ## 🧪 How to Test
 
 ### 1. Test with Existing Accounts
-Visit: https://stratifi.vercel.app/accounts
+Visit: https://stratiri.vercel.app/accounts
 
 **Current Behavior:**
 - Existing accounts will still show "Plaid"/"Tink" (old data)
@@ -148,7 +148,7 @@ backfillPlaidBankNames()
 
 1. **Check Logs:**
    ```bash
-   cd /Users/scottstephens/stratifi && vercel logs stratifi.vercel.app --since 10m
+   cd /Users/scottstephens/stratiri && vercel logs stratiri.vercel.app --since 10m
    ```
 
 2. **Test New Connection:**
@@ -203,7 +203,7 @@ If issues arise, you can quickly roll back:
 
 ```bash
 # View recent deployments
-cd /Users/scottstephens/stratifi && vercel ls
+cd /Users/scottstephens/stratiri && vercel ls
 
 # Rollback to previous deployment
 vercel rollback [previous-deployment-url]

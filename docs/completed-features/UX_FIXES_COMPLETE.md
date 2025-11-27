@@ -211,7 +211,7 @@ ingestion_audit_log | CASCADE  ✅
 ## Deployment
 
 - **Commit:** `d8b71f7`
-- **Production:** https://stratifi-pi.vercel.app
+- **Production:** https://stratiri-pi.vercel.app
 - **Status:** ✅ Deployed and live
 
 ## Next Steps

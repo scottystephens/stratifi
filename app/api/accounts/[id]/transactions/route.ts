@@ -38,13 +38,29 @@ export async function GET(
       .range(offset, rangeEnd);
 
     // Filter by account_id (could be UUID id or TEXT account_id)
-    // Try both to handle different account ID formats
-    const { data: account } = await supabase
+    // First try by id (UUID), then by account_id (TEXT)
+    let account = null;
+    
+    // Try by UUID id first
+    const { data: byId } = await supabase
       .from('accounts')
       .select('account_id, id')
       .eq('tenant_id', tenantId)
-      .or(`account_id.eq.${accountId},id.eq.${accountId}`)
-      .single();
+      .eq('id', accountId)
+      .maybeSingle();
+    
+    if (byId) {
+      account = byId;
+    } else {
+      // Try by account_id (TEXT primary key)
+      const { data: byAccountId } = await supabase
+        .from('accounts')
+        .select('account_id, id')
+        .eq('tenant_id', tenantId)
+        .eq('account_id', accountId)
+        .maybeSingle();
+      account = byAccountId;
+    }
 
     if (!account) {
       return NextResponse.json(

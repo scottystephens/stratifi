@@ -1,5 +1,5 @@
 -- =====================================================
--- Stratifi - Super Admin Support
+-- Stratiri - Super Admin Support
 -- Adds super admin functionality with cross-tenant access
 -- =====================================================
 

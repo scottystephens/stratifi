@@ -241,7 +241,7 @@ POST /api/banking/[provider]/sync
 1. **Test Incremental Sync:**
    ```bash
    # Trigger sync for existing Tink connection
-   curl -X POST https://stratifi-pi.vercel.app/api/banking/tink/sync \
+   curl -X POST https://stratiri-pi.vercel.app/api/banking/tink/sync \
      -H "Content-Type: application/json" \
      -d '{
        "connectionId": "6a8e425e-ea26-47cc-9eac-9639683443a8",
@@ -263,7 +263,7 @@ POST /api/banking/[provider]/sync
 
 4. **Test Manual Override:**
    ```bash
-   curl -X POST https://stratifi-pi.vercel.app/api/banking/tink/sync \
+   curl -X POST https://stratiri-pi.vercel.app/api/banking/tink/sync \
      -H "Content-Type: application/json" \
      -d '{
        "connectionId": "...",
@@ -282,7 +282,7 @@ POST /api/banking/[provider]/sync
 
 ### Deployment
 - ✅ Built successfully
-- ✅ Deployed to production (stratifi-pi.vercel.app)
+- ✅ Deployed to production (stratiri-pi.vercel.app)
 - ✅ No linter errors
 - ✅ All imports resolved
 

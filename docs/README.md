@@ -1,7 +1,7 @@
-# Stratifi Documentation
+# Stratiri Documentation
 
 **Production SaaS Platform for Strategic Financial Intelligence**  
-🌐 **Live:** https://stratifi.vercel.app
+🌐 **Live:** https://stratiri.vercel.app
 
 ---
 
@@ -188,9 +188,9 @@ When adding new documentation:
 
 ## 🔗 External Links
 
-- **Production:** https://stratifi.vercel.app
+- **Production:** https://stratiri.vercel.app
 - **Supabase Dashboard:** https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik
-- **GitHub:** https://github.com/scottystephens/stratifi (update with actual URL)
+- **GitHub:** https://github.com/scottystephens/stratiri (update with actual URL)
 
 ---
 

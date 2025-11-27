@@ -54,7 +54,7 @@ async function testPlaidResponses() {
 
     if (error || !connection) {
       console.error('❌ No active Plaid connection found');
-      console.error('Please connect a Plaid account first at: https://stratifi.vercel.app/connections');
+      console.error('Please connect a Plaid account first at: https://stratiri.vercel.app/connections');
       process.exit(1);
     }
 

@@ -1,7 +1,7 @@
 # Supabase CLI & Programmatic SQL Execution - Findings
 
 **Date:** November 14, 2024  
-**Project:** Stratifi  
+**Project:** Stratiri  
 **Issue:** Need to execute SQL migrations programmatically
 
 ---

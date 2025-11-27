@@ -114,12 +114,12 @@ This would be more efficient and avoid the filtering issue entirely.
 ## Deployment Status
 
 - Commit: `9e46b90` - "fix: transaction filtering and onboarding redirect issues"
-- Deployed: https://stratifi-3jnrxbjs8-scottystephens-projects.vercel.app
-- Production: https://stratifi-pi.vercel.app (auto-promotes)
+- Deployed: https://stratiri-3jnrxbjs8-scottystephens-projects.vercel.app
+- Production: https://stratiri-pi.vercel.app (auto-promotes)
 
 ## How to Verify
 
-1. Go to https://stratifi-pi.vercel.app/connections/new
+1. Go to https://stratiri-pi.vercel.app/connections/new
 2. Connect Plaid with test credentials:
    - Username: `user_transactions_dynamic`
    - Password: any non-blank value

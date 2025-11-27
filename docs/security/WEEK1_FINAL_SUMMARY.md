@@ -135,13 +135,13 @@ UPSTASH_REDIS_REST_URL=your_url
 UPSTASH_REDIS_REST_TOKEN=your_token
 
 # Required - for CORS
-NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
+NEXT_PUBLIC_APP_URL=https://stratiri.vercel.app
 ```
 
 ### Deploy Commands
 ```bash
 # Deploy to production
-cd /Users/scottstephens/stratifi && vercel --prod
+cd /Users/scottstephens/stratiri && vercel --prod
 
 # Or test locally first
 npm run build && npm run start
@@ -347,7 +347,7 @@ return handleApiError(error, { endpoint: '/api/test' });
 
 **Command:**
 ```bash
-cd /Users/scottstephens/stratifi && vercel --prod
+cd /Users/scottstephens/stratiri && vercel --prod
 ```
 
 ---

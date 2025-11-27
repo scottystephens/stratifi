@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document summarizes the successful deployment and verification of Migration 11, which implements account creation and connection metadata management for the Stratifi platform.
+This document summarizes the successful deployment and verification of Migration 11, which implements account creation and connection metadata management for the Stratiri platform.
 
 ---
 
@@ -101,8 +101,8 @@ All expected columns were verified to exist:
 
 ### Vercel Production Deployment
 **Platform:** Vercel  
-**Project:** stratifi  
-**Domain:** https://stratifi.vercel.app  
+**Project:** stratiri  
+**Domain:** https://stratiri.vercel.app  
 **Latest Deployment:** 6 minutes ago  
 **Status:** ✅ Ready (55s build time)
 
@@ -116,7 +116,7 @@ All expected columns were verified to exist:
   - Updated connection detail page
 
 ### Production URL
-🌐 **https://stratifi.vercel.app**
+🌐 **https://stratiri.vercel.app**
 
 ---
 
@@ -298,10 +298,10 @@ npx tsx scripts/utilities/verify-migration-11.ts
 supabase projects list
 
 # Check Vercel deployment
-vercel ls stratifi --prod
+vercel ls stratiri --prod
 
 # View production logs
-vercel logs stratifi.vercel.app --follow
+vercel logs stratiri.vercel.app --follow
 ```
 
 ---
@@ -319,6 +319,6 @@ vercel logs stratifi.vercel.app --follow
 ---
 
 *Generated: November 15, 2025*  
-*Project: Stratifi - Strategic Financial Intelligence Platform*  
+*Project: Stratiri - Strategic Financial Intelligence Platform*  
 *Version: Migration 11 - Account Creation & Metadata*
 

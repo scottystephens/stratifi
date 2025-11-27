@@ -24,7 +24,7 @@
 ## 📂 Complete Structure
 
 ```
-stratifi/
+stratiri/
 ├── README.md (project root - stays here)
 │
 └── docs/

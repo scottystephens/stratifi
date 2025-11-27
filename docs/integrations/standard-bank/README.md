@@ -2,7 +2,7 @@
 
 ## 1. Why this exists
 - Standard Bank&apos;s Business Online SA APIs (OneHub Marketplace) require customer-issued App IDs, client secrets, and subscription keys rather than Plaid/Tink OAuth links.
-- Clients can now securely share those credentials inside Stratifi from the **Connections → New → Direct Bank APIs** section.
+- Clients can now securely share those credentials inside Stratiri from the **Connections → New → Direct Bank APIs** section.
 - Credentials are encrypted with AES-256-GCM using `CREDENTIAL_ENCRYPTION_KEY` before landing in Supabase, then scoped to each tenant via RLS.
 
 ## 2. Credential ingredients
@@ -15,12 +15,12 @@ Per the [Standard Bank OneHub API Marketplace](https://corporateandinvestment.st
 - **Subscription Key - Statements/Transactions** – Unique key for the Statements/Transactions API product. Used to fetch transaction history.
 
 ### Optional Credentials:
-- **Subscription Key - Payments** – Only required if initiating payments through Stratifi. Leave blank for read-only access.
+- **Subscription Key - Payments** – Only required if initiating payments through Stratiri. Leave blank for read-only access.
 - **Business Unit / Division ID** – Required for multi-entity business structures with multiple profiles.
 
 **Important:** Standard Bank issues a **separate subscription key for each API product**. Each key must be included in API requests via the `Ocp-Apim-Subscription-Key` header. The correct key must be used for the corresponding API endpoint (balances vs. transactions).
 
-## 3. Product flow in Stratifi
+## 3. Product flow in Stratiri
 1. Tenant admin navigates to `Connections → New → Direct Bank APIs`.
 2. They enter the fields above plus optional metadata (environment flag, notes).
 3. API route `POST /api/banking/standard-bank/credentials`:

@@ -133,7 +133,7 @@ export async function findExistingAccount(
 // =====================================================
 
 /**
- * Creates or updates a Stratifi account from provider account data
+ * Creates or updates a Stratiri account from provider account data
  * Handles deduplication, metadata enrichment, and error recovery
  */
 export async function createOrUpdateAccount(
@@ -157,6 +157,10 @@ export async function createOrUpdateAccount(
     if (existingAccount) {
       // Update existing account
       const updates: Partial<Account> = {
+        // ✨ CRITICAL: Update connection_id so transaction queries work!
+        connection_id: connectionId,
+        provider_id: providerId,
+        
         current_balance: providerAccount.balance,
         account_status: providerAccount.status,
         last_synced_at: now,
@@ -182,6 +186,8 @@ export async function createOrUpdateAccount(
           institution_data: providerAccount.institutionData, // Complete raw data
         },
       };
+      
+      console.log(`🔄 Updating account ${existingAccount.account_name}: connection_id = ${connectionId}`);
 
       // Use account_id for updates (it's the primary key)
       const updateKey = existingAccount.account_id || existingAccount.id;
@@ -324,14 +330,14 @@ export async function createOrUpdateAccount(
 
 /**
  * Creates or updates a provider_account record
- * Links to Stratifi account via foreign key
+ * Links to Stratiri account via foreign key
  */
 export async function createOrUpdateProviderAccount(
   tenantId: string,
   connectionId: string,
   providerId: string,
   providerAccount: ProviderAccount,
-  stratifiAccountId: string
+  stratiriAccountId: string
 ): Promise<{ success: boolean; providerAccountId?: string; error?: string }> {
   try {
     const now = new Date().toISOString();
@@ -349,7 +355,7 @@ export async function createOrUpdateProviderAccount(
       tenant_id: tenantId,
       connection_id: connectionId,
       provider_id: providerId,
-      account_id: stratifiAccountId,
+      account_id: stratiriAccountId,
       external_account_id: providerAccount.externalAccountId,
       account_name: providerAccount.accountName,
       account_number: providerAccount.accountNumber,
@@ -420,7 +426,7 @@ export async function batchCreateOrUpdateAccounts(
 
   for (const providerAccount of providerAccounts) {
     try {
-      // Create or update Stratifi account
+      // Create or update Stratiri account
       const accountResult = await createOrUpdateAccount(
         tenantId,
         connectionId,
@@ -442,7 +448,7 @@ export async function batchCreateOrUpdateAccounts(
         if (providerAccountResult.success) {
           successful.push(accountResult);
         } else {
-          // Stratifi account created but provider link failed
+          // Stratiri account created but provider link failed
           failed.push({
             account: providerAccount,
             error: providerAccountResult.error || 'Failed to create provider account link',
@@ -523,12 +529,12 @@ export async function syncAccountClosures(
       .update({ status: 'closed', updated_at: now })
       .in('id', providerAccountIds);
 
-    // Update linked Stratifi accounts
-    const stratifiAccountIds = closedAccounts
+    // Update linked Stratiri accounts
+    const stratiriAccountIds = closedAccounts
       .filter((a) => a.account_id)
       .map((a) => a.account_id);
 
-    if (stratifiAccountIds.length > 0) {
+    if (stratiriAccountIds.length > 0) {
       await supabase
         .from('accounts')
         .update({
@@ -536,7 +542,7 @@ export async function syncAccountClosures(
           closing_date: now,
           updated_at: now,
         })
-        .in('id', stratifiAccountIds);
+        .in('id', stratiriAccountIds);
     }
 
     console.log(`🔒 Marked ${closedAccounts.length} accounts as closed`);
@@ -588,6 +594,114 @@ export async function getAccountStats(connectionId: string): Promise<{
   } catch (error) {
     console.error('Error getting account stats:', error);
     return { total: 0, active: 0, closed: 0, totalBalance: 0, currencies: [] };
+  }
+}
+
+/**
+ * Syncs historical balances from raw storage (e.g. xero_balances) to account_statements
+ * This bridges the gap between raw provider data and the normalized statements table used for charts
+ */
+export async function syncHistoricalBalances(
+  tenantId: string,
+  connectionId: string,
+  providerId: string
+): Promise<number> {
+  try {
+    if (providerId !== 'xero') {
+      console.log(`[AccountService] Historical balance sync not implemented for ${providerId}`);
+      return 0;
+    }
+
+    console.log(`[AccountService] Syncing historical balances for connection ${connectionId}...`);
+
+    // 1. Get all accounts for this connection to map external_id -> internal_id
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('id, account_id, currency, external_account_id') // external_account_id is what matches xero_balances.account_id
+      .eq('connection_id', connectionId);
+
+    if (!accounts || accounts.length === 0) {
+      console.log('[AccountService] No accounts found for connection, skipping balance sync');
+      return 0;
+    }
+
+    // Create map of external_id -> account
+    const accountMap = new Map(accounts.map(a => [a.external_account_id, a]));
+
+    // 2. Fetch all historical balances from xero_balances
+    // We use 'raw_report_data' if needed, but the columns are already normalized in the table
+    const { data: balances } = await supabase
+      .from('xero_balances')
+      .select('account_id, balance_date, closing_balance, currency')
+      .eq('connection_id', connectionId);
+
+    if (!balances || balances.length === 0) {
+      console.log('[AccountService] No historical balances found in xero_balances');
+      return 0;
+    }
+
+    console.log(`[AccountService] Found ${balances.length} historical balance records`);
+
+    // 3. Process and insert into account_statements
+    let syncedCount = 0;
+    
+    // Process in batches of 50 to avoid overwhelming the DB
+    const batchSize = 50;
+    for (let i = 0; i < balances.length; i += batchSize) {
+      const batch = balances.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (balanceRecord) => {
+        const account = accountMap.get(balanceRecord.account_id);
+        
+        if (!account) {
+          // Account might have been filtered out or not synced yet
+          return;
+        }
+
+        // Skip if date is invalid
+        if (!balanceRecord.balance_date) return;
+
+        try {
+          // Use the helper to upsert (handles currency conversion etc)
+          // Note: upsertAccountStatement does an individual insert/update.
+          // For massive history, we might want a bulk insert, but this is safer for now.
+          const currency = balanceRecord.currency || account.currency || 'USD';
+          
+          // Only convert if needed
+          let usdEquivalent: number | undefined;
+          if (currency !== 'USD') {
+             const result = await convertAmountToUsd(balanceRecord.closing_balance, currency);
+             usdEquivalent = result ?? undefined;
+          }
+
+          await upsertAccountStatement({
+            tenantId,
+            accountId: account.id, // Internal ID
+            statementDate: balanceRecord.balance_date,
+            endingBalance: balanceRecord.closing_balance,
+            currency: currency,
+            usdEquivalent: usdEquivalent ?? undefined, // Explicitly undefined if null
+            source: 'synced',
+            confidence: 'high',
+            metadata: {
+              provider_source: 'xero_balances',
+              synced_at: new Date().toISOString()
+            }
+          });
+          
+          syncedCount++;
+        } catch (err) {
+          console.error(`[AccountService] Failed to sync balance for acc ${account.id} on ${balanceRecord.balance_date}:`, err);
+        }
+      }));
+    }
+
+    console.log(`[AccountService] ✅ Successfully synced ${syncedCount} historical statements`);
+    return syncedCount;
+
+  } catch (error) {
+    console.error('[AccountService] Fatal error syncing historical balances:', error);
+    return 0;
   }
 }
 

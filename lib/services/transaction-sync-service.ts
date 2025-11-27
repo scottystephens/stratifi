@@ -351,15 +351,67 @@ export async function batchCreateOrUpdateTransactions(
       }));
 
       // Use upsert to handle both create and update
+      // Since transaction_id is the primary key (globally unique), use it for conflict resolution
+      // When a transaction already exists (from a previous connection), we update it with new data
+      // Note: Supabase upsert will update ALL columns on conflict, effectively overriding the existing transaction
       const { data, error } = await supabase
         .from('transactions')
         .upsert(batchData, {
-          onConflict: 'connection_id,transaction_id',
+          onConflict: 'transaction_id',
           ignoreDuplicates: false,
         })
         .select('transaction_id');
 
       if (error) {
+        // If we get a duplicate key error, it means the upsert didn't work as expected
+        // This can happen if Supabase's upsert doesn't properly handle primary key conflicts
+        // In this case, we'll update existing transactions individually
+        if (error.code === '23505' && error.message.includes('transactions_pkey')) {
+          console.warn(`[TransactionBatch] Batch ${Math.floor(i / BATCH_SIZE) + 1} has duplicate transactions, updating individually...`);
+          
+          // Update each transaction individually to override existing data
+          for (const txData of batchData) {
+            const { error: updateError } = await supabase
+              .from('transactions')
+              .update({
+                tenant_id: txData.tenant_id,
+                connection_id: txData.connection_id,
+                provider_id: txData.provider_id,
+                account_id: txData.account_id,
+                date: txData.date,
+                amount: txData.amount,
+                currency: txData.currency,
+                description: txData.description,
+                type: txData.type,
+                counterparty_name: txData.counterparty_name,
+                counterparty_account: txData.counterparty_account,
+                reference: txData.reference,
+                category: txData.category,
+                metadata: txData.metadata,
+                created_by: txData.created_by,
+                updated_at: txData.updated_at,
+              })
+              .eq('transaction_id', txData.transaction_id);
+            
+            if (updateError) {
+              // If update fails (transaction doesn't exist), try insert
+              const { error: insertError } = await supabase
+                .from('transactions')
+                .insert(txData);
+              
+              if (insertError) {
+                console.error(`[TransactionBatch] Failed to upsert transaction ${txData.transaction_id}:`, insertError);
+                errors.push(`Transaction ${txData.transaction_id}: ${insertError.message}`);
+              } else {
+                created++;
+              }
+            } else {
+              updated++;
+            }
+          }
+          continue;
+        }
+        
         console.error(`[TransactionBatch] Batch ${Math.floor(i / BATCH_SIZE) + 1} error:`, error);
         errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
         continue;

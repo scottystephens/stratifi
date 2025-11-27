@@ -44,7 +44,7 @@ cd /Users/scottstephens/stratifi && vercel --prod
 cd /Users/scottstephens/stratifi && vercel
 
 # View logs
-cd /Users/scottstephens/stratifi && vercel logs stratifi.vercel.app --since 1h
+cd /Users/scottstephens/stratifi && vercel logs stratiri.vercel.app --since 1h
 ```
 
 ### Environment Variables
@@ -71,5 +71,5 @@ cd /Users/scottstephens/stratifi && vercel env ls production
 - Supabase migrations: `npx tsx scripts/utilities/run-migration-cli.ts scripts/migrations/XX-name.sql`
 - Vercel deploy: `vercel --prod`
 - Supabase project: `vnuithaqtpgbwmdvtxik`
-- Production URL: `stratifi.vercel.app`
+- Production URL: `stratiri.vercel.app`
 

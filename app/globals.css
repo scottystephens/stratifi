@@ -2,58 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   Design System
+   ========================================
+
+   Brand Colors:
+   - Primary: #047857 (Deep Emerald)
+   - Primary Light: #10b981
+   - Primary Dark: #065f46
+
+   Typography:
+   - Universal: Inter (clean, readable, professional for all text)
+
+   Usage:
+   - Use .font-display for headlines
+   - Use primary / stone palettes for UI states
+
+   ======================================== */
+
 @layer base {
   :root {
-    /* Stratifi Brand Colors */
-    --background: 220 20% 98%;  /* Light gray background #F8FAFC */
-    --foreground: 217 33% 17%;  /* Slate gray text #1E293B */
-    --card: 0 0% 100%;          /* White cards */
-    --card-foreground: 217 33% 17%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 217 33% 17%;
+    /* Background & Foreground */
+    --background: 0 0% 100%;           /* Pure white */
+    --foreground: 28 6% 12%;           /* stone-900 equivalent */
     
-    /* Stratifi Blue #0066FF */
-    --primary: 217 100% 50%;
+    /* Card surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 28 6% 12%;
+    
+    /* Popover surfaces */
+    --popover: 0 0% 100%;
+    --popover-foreground: 28 6% 12%;
+    
+    /* Primary - Emerald */
+    --primary: 162 88% 18%;            /* #047857 */
     --primary-foreground: 0 0% 100%;
     
-    /* Stratifi Deep Blue #003D99 */
-    --secondary: 217 100% 30%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary */
+    --secondary: 30 6% 96%;            /* stone-100 */
+    --secondary-foreground: 28 6% 12%;
     
-    --muted: 217 32% 96%;        /* Light slate */
-    --muted-foreground: 215 16% 47%;  /* Medium slate */
-    --accent: 217 32% 96%;
-    --accent-foreground: 217 33% 17%;
+    /* Muted */
+    --muted: 30 6% 96%;
+    --muted-foreground: 25 5% 45%;     /* stone-500 */
     
-    --destructive: 0 84% 60%;    /* Red #EF4444 */
+    /* Accent */
+    --accent: 30 6% 96%;
+    --accent-foreground: 28 6% 12%;
+    
+    /* Destructive */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 217 20% 92%;       /* Light border */
-    --input: 217 20% 92%;
-    --ring: 217 100% 50%;        /* Stratifi Blue ring */
-    --radius: 0.75rem;           /* Increased border radius for modern look */
+    /* Border & Input */
+    --border: 24 6% 90%;               /* stone-200 */
+    --input: 24 6% 90%;
+    --ring: 162 88% 18%;               /* Same as primary */
+    
+    /* Border Radius */
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 24 10% 6%;
+    --foreground: 30 6% 96%;
+    --card: 24 10% 8%;
+    --card-foreground: 30 6% 96%;
+    --popover: 24 10% 8%;
+    --popover-foreground: 30 6% 96%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 24 10% 15%;
+    --secondary-foreground: 30 6% 96%;
+    --muted: 24 10% 15%;
+    --muted-foreground: 25 5% 65%;
+    --accent: 24 10% 15%;
+    --accent-foreground: 30 6% 96%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 24 10% 20%;
+    --input: 24 10% 20%;
+    --ring: 160 84% 39%;
   }
 }
 
@@ -61,48 +90,264 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
   }
 }
 
-/* Stratifi Professional Spacing & Design */
+/* ========================================
+   COMPONENT STYLES
+   ======================================== */
+
 @layer components {
-  /* Page containers with optimal spacing */
-  .stratifi-page-container {
-    @apply max-w-7xl mx-auto px-6 py-8;
+  /* Page Layout */
+  .page-container {
+    @apply w-full px-6 lg:px-12;
   }
   
-  .stratifi-page-header {
-    @apply mb-8;
+  .page-container-narrow {
+    @apply w-full max-w-5xl mx-auto px-6 lg:px-12;
   }
   
-  /* Card enhancements */
-  .stratifi-card {
-    @apply bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-200;
+  .page-section {
+    @apply py-16 lg:py-24;
+  }
+
+  /* Section Headers */
+  .section-label {
+    @apply text-emerald-700 text-xs font-bold uppercase tracking-[0.2em];
+  }
+
+  .section-label-line {
+    @apply h-px w-12 bg-emerald-700;
   }
   
-  /* Professional shadows */
-  .stratifi-shadow-sm {
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  .section-title {
+    @apply text-3xl lg:text-4xl font-black tracking-tight text-stone-900;
   }
   
-  .stratifi-shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  .section-description {
+    @apply text-lg text-stone-500 leading-relaxed;
+  }
+
+  /* Cards */
+  .card-base {
+    @apply bg-white rounded-2xl border border-stone-200;
   }
   
-  .stratifi-shadow-md {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  .card-elevated {
+    @apply card-base shadow-card hover:shadow-card-hover transition-shadow;
   }
   
-  /* Grid layouts */
-  .stratifi-grid {
-    @apply grid gap-6 md:grid-cols-2 lg:grid-cols-3;
+  .card-interactive {
+    @apply card-base hover:border-emerald-700/30 hover:shadow-card-hover transition-all cursor-pointer;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-6 py-3 bg-emerald-700 text-white rounded-lg font-semibold
+           hover:bg-emerald-800 transition-all;
   }
   
-  /* Professional animations */
-  .stratifi-transition {
-    @apply transition-all duration-200 ease-in-out;
+  .btn-primary-lg {
+    @apply px-8 py-4 bg-stone-900 text-white rounded-lg font-semibold 
+           hover:bg-stone-800 transition-all flex items-center gap-3;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-stone-100 text-stone-900 rounded-lg font-semibold 
+           hover:bg-stone-200 transition-all;
+  }
+  
+  .btn-ghost {
+    @apply px-6 py-3 text-stone-600 font-medium hover:text-stone-900 transition-colors;
+  }
+  
+  .btn-outline {
+    @apply px-6 py-3 border border-stone-200 rounded-lg font-semibold
+           text-stone-700 hover:border-emerald-700 hover:text-emerald-700 transition-all;
+  }
+
+  /* Feature Cards */
+  .feature-card {
+    @apply p-8 bg-white rounded-2xl border border-stone-200
+           hover:border-emerald-700/30 hover:shadow-emerald-lg transition-all;
+  }
+
+  .feature-icon {
+    @apply w-12 h-12 rounded-xl bg-emerald-700/10 flex items-center justify-center
+           group-hover:bg-emerald-700 group-hover:scale-110 transition-all;
+  }
+
+  .feature-icon-inner {
+    @apply w-6 h-6 text-emerald-700 group-hover:text-white transition-colors;
+  }
+
+  /* Stats */
+  .stat-value {
+    @apply text-4xl lg:text-5xl font-black text-stone-900 tracking-tight;
+  }
+  
+  .stat-label {
+    @apply text-sm text-stone-400 font-medium uppercase tracking-wider;
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors;
+  }
+  
+  .nav-blur {
+    @apply bg-white/80 backdrop-blur-xl shadow-sm;
+  }
+
+  /* Data Display */
+  .data-label {
+    @apply text-xs text-stone-400 font-medium uppercase tracking-wider;
+  }
+  
+  .data-value {
+    @apply text-2xl font-bold text-stone-900;
+  }
+  
+  .data-value-lg {
+    @apply text-4xl lg:text-5xl font-black text-stone-900 tracking-tight;
+  }
+
+  /* Badges */
+  .badge-positive {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 rounded-full text-sm font-bold text-emerald-700;
+  }
+  
+  .badge-negative {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 rounded-full text-sm font-bold text-red-700;
+  }
+  
+  .badge-neutral {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-full text-sm font-bold text-stone-600;
+  }
+
+  /* Form Inputs */
+  .input-base {
+    @apply w-full px-4 py-3 bg-white border border-stone-200 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700
+           transition-all;
+  }
+  
+  .input-label {
+    @apply block text-sm font-medium text-stone-700 mb-2;
+  }
+
+  /* Tables */
+  .table-header {
+    @apply text-xs text-stone-400 font-medium uppercase tracking-wider text-left;
+  }
+  
+  .table-cell {
+    @apply py-4 text-sm text-stone-900;
+  }
+  
+  .table-row {
+    @apply border-b border-stone-100 hover:bg-stone-50 transition-colors;
+  }
+
+  /* Background Patterns */
+  .bg-grid {
+    background-image: 
+      linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+  
+  .bg-gradient-subtle {
+    @apply bg-gradient-to-bl from-emerald-700/[0.03] to-transparent;
+  }
+
+  /* Floating Elements */
+  .float-card {
+    @apply bg-white rounded-xl border border-stone-200 shadow-emerald-xl;
+  }
+  
+  .float-card-accent {
+    @apply bg-emerald-700 text-white rounded-xl shadow-emerald-xl;
+  }
+
+  /* Trust Indicators */
+  .trust-item {
+    @apply flex items-center gap-2 text-sm text-stone-400;
+  }
+
+  .trust-icon {
+    @apply w-4 h-4 text-emerald-700;
+  }
+
+  /* CTA Sections */
+  .cta-section {
+    @apply py-24 bg-emerald-700;
+  }
+
+  .cta-title {
+    @apply text-3xl lg:text-5xl font-black text-white tracking-tight;
+  }
+
+  .cta-description {
+    @apply text-xl text-emerald-200;
+  }
+
+  .cta-btn-primary {
+    @apply px-10 py-5 bg-white text-emerald-700 rounded-lg font-bold text-lg
+           hover:bg-stone-50 transition-all flex items-center gap-3;
+  }
+  
+  .cta-btn-secondary {
+    @apply px-10 py-5 text-white font-semibold text-lg border-2 border-white/30 
+           rounded-lg hover:bg-white/10 transition-all;
   }
 }
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+@layer utilities {
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Animation utilities */
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  /* Gradient text */
+  .text-gradient-primary {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/80;
+  }
+}
+
+/* ========================================
+   LEGACY COMPATIBILITY
+   (Keep existing classes working)
+   ======================================== */
 

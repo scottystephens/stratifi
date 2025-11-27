@@ -156,8 +156,8 @@ vercel env pull .env.local
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/stratifi.git
-cd stratifi
+git clone https://github.com/your-org/stratiri.git
+cd stratiri
 
 # Install dependencies
 npm install
@@ -203,7 +203,7 @@ vercel
 vercel --prod
 
 # Deploy with specific name
-vercel --name stratifi-test
+vercel --name stratiri-test
 ```
 
 ## Database Migrations
@@ -301,5 +301,5 @@ Supabase provides:
 ---
 
 **Last Updated**: November 16, 2025  
-**Production URL**: https://stratifi-pi.vercel.app  
+**Production URL**: https://stratiri-pi.vercel.app  
 **Status**: ✅ Live

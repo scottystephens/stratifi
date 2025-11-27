@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS plaid_accounts (
     raw_data JSONB NOT NULL,
     
     -- Link to our normalized account
-    stratifi_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    stratiri_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     
     -- Tracking
     first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -279,7 +279,7 @@ USING (
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_tenant ON plaid_accounts(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_connection ON plaid_accounts(connection_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_account_id ON plaid_accounts(account_id);
-CREATE INDEX IF NOT EXISTS idx_plaid_accounts_stratifi_id ON plaid_accounts(stratifi_account_id);
+CREATE INDEX IF NOT EXISTS idx_plaid_accounts_stratiri_id ON plaid_accounts(stratiri_account_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_type ON plaid_accounts(type, subtype);
 
 -- =====================================================

@@ -7,7 +7,7 @@
 
 ## Summary
 
-Successfully updated Stratifi's Standard Bank integration to support **multiple subscription keys** based on the discovery that Standard Bank's OneHub API Marketplace issues **separate subscription keys for each API product** (Balances, Transactions, Payments).
+Successfully updated Stratiri's Standard Bank integration to support **multiple subscription keys** based on the discovery that Standard Bank's OneHub API Marketplace issues **separate subscription keys for each API product** (Balances, Transactions, Payments).
 
 ---
 

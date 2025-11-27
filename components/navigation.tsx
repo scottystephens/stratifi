@@ -22,7 +22,6 @@ import {
 import { cn } from '@/lib/utils'
 import { useTenant } from '@/lib/tenant-context'
 import { useAuth } from '@/lib/auth-context'
-import { StratifiLogo } from './stratifi-logo'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -50,19 +49,22 @@ export function Navigation() {
 
   return (
     <div className={cn(
-      "flex h-screen flex-col border-r bg-card transition-all duration-300",
+      "flex h-screen flex-col border-r border-stone-200 bg-white transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo & Collapse Button */}
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!isCollapsed && (
-          <Link href="/dashboard" className="flex items-center">
-            <StratifiLogo variant="full" size="sm" className="text-primary" />
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-white font-black text-lg">S</span>
+            </div>
+            <span className="font-bold text-xl tracking-tight text-stone-900">Strategy</span>
           </Link>
         )}
         {isCollapsed && (
           <Link href="/dashboard" className="mx-auto">
-            <StratifiLogo variant="icon" size="sm" className="text-primary" />
+            <span className="text-primary text-lg font-semibold">S</span>
           </Link>
         )}
         {!isCollapsed && (
@@ -90,7 +92,7 @@ export function Navigation() {
         <div className="border-b p-3">
           <button
             onClick={() => setTenantMenuOpen(!tenantMenuOpen)}
-            className="flex w-full items-center justify-between rounded-lg bg-accent/50 px-3 py-2 text-sm hover:bg-accent transition-colors"
+            className="flex w-full items-center justify-between rounded-lg bg-stone-50 px-3 py-2 text-sm hover:bg-stone-100 transition-colors"
           >
             <div className="flex items-center gap-2 min-w-0">
               <Building2 className="h-4 w-4 flex-shrink-0 text-primary" />
@@ -107,7 +109,7 @@ export function Navigation() {
 
           {/* Tenant Dropdown */}
           {tenantMenuOpen && userTenants.length > 1 && (
-            <div className="mt-2 rounded-lg border bg-card shadow-lg">
+            <div className="mt-2 rounded-lg border border-stone-200 bg-white shadow-xl">
               <div className="p-2 space-y-1">
                 {userTenants.map((userTenant) => (
                   <button
@@ -139,7 +141,7 @@ export function Navigation() {
       {/* Collapsed Tenant Indicator */}
       {currentTenant && isCollapsed && (
         <div className="border-b p-3 flex justify-center">
-          <div className="p-2 rounded-lg bg-accent/50">
+          <div className="p-2 rounded-lg bg-stone-50">
             <Building2 className="h-5 w-5 text-primary" />
           </div>
         </div>
@@ -157,8 +159,8 @@ export function Navigation() {
                 'flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isCollapsed ? 'justify-center' : 'space-x-3',
                 isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
               )}
               title={isCollapsed ? item.name : undefined}
             >
@@ -180,8 +182,8 @@ export function Navigation() {
                 "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isCollapsed ? "justify-center" : "space-x-3",
                 pathname?.startsWith('/admin')
-                  ? 'bg-amber-100 text-amber-900 hover:bg-amber-200'
-                  : 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  ? 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                  : 'text-amber-700 hover:bg-amber-50'
               )}
               title={isCollapsed ? "Admin Dashboard" : undefined}
             >
@@ -196,7 +198,7 @@ export function Navigation() {
           <Link
             href="/settings"
             className={cn(
-              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-stone-500 transition-colors hover:bg-stone-50 hover:text-stone-900",
               isCollapsed ? "justify-center" : "space-x-3"
             )}
             title={isCollapsed ? "Settings" : undefined}
@@ -207,7 +209,7 @@ export function Navigation() {
           <Link
             href="/team"
             className={cn(
-              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium text-stone-500 transition-colors hover:bg-stone-50 hover:text-stone-900",
               isCollapsed ? "justify-center" : "space-x-3"
             )}
             title={isCollapsed ? "Team" : undefined}
@@ -222,7 +224,7 @@ export function Navigation() {
           <div className="border-t p-3">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-stone-50 transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <UserCircle2 className="h-5 w-5 flex-shrink-0" />
@@ -238,7 +240,7 @@ export function Navigation() {
 
             {/* User Dropdown */}
             {userMenuOpen && (
-              <div className="mt-2 rounded-lg border bg-card shadow-lg">
+              <div className="mt-2 rounded-lg border border-stone-200 bg-white shadow-xl">
                 <button
                   onClick={handleSignOut}
                   className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -256,7 +258,7 @@ export function Navigation() {
           <div className="border-t p-3 flex justify-center">
             <button
               onClick={handleSignOut}
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              className="p-2 rounded-lg hover:bg-stone-50 transition-colors"
               title="Sign out"
             >
               <LogOut className="h-5 w-5 text-red-600" />

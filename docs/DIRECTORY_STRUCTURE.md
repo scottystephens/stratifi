@@ -1,6 +1,6 @@
 # Documentation Directory Structure
 
-**Complete organization of Stratifi's documentation**
+**Complete organization of Stratiri's documentation**
 
 ---
 

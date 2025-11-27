@@ -54,11 +54,11 @@ Banking aggregation provider integration for European banks and financial instit
 ## 🔐 Authentication Flow
 
 ```
-User → Stratifi → Tink Authorization URL
+User → Stratiri → Tink Authorization URL
                        ↓
                  User authorizes with bank
                        ↓
-                 Tink callback to Stratifi
+                 Tink callback to Stratiri
                        ↓
                  Exchange code for tokens
                        ↓

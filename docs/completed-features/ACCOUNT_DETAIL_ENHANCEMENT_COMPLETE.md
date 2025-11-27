@@ -192,7 +192,7 @@ account.custom_fields = {
 - [x] No linting errors
 
 ### 🔄 To Test in Production
-1. **Navigate to account page** - https://stratifi-pi.vercel.app/accounts/[id]
+1. **Navigate to account page** - https://stratiri-pi.vercel.app/accounts/[id]
 2. **Verify provider info displays** - Should see blue "tink" badge
 3. **Check all Tink fields** - Account type, institution ID, holder name, etc.
 4. **Verify sync timestamps** - First sync, last sync, last refreshed
@@ -259,6 +259,6 @@ account.custom_fields = {
 ---
 
 *Deployed: November 16, 2024*  
-*Production URL: https://stratifi-pi.vercel.app*  
+*Production URL: https://stratiri-pi.vercel.app*  
 *Status: ✅ Production Ready*
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stratifi's banking provider architecture has been completely refactored to provide a clean, layered system that:
+Stratiri's banking provider architecture has been completely refactored to provide a clean, layered system that:
 
 - **Stores 100% of raw API responses** in JSONB format for auto-detection of new fields
 - **Separates raw data ingestion** from normalization into standard schemas
@@ -55,7 +55,7 @@ class RawStorageService {
 
 ### 3. Normalization Layer (`lib/services/normalization-service.ts`)
 
-Transforms raw JSONB data into standard Stratifi formats:
+Transforms raw JSONB data into standard Stratiri formats:
 
 ```typescript
 class NormalizationService {

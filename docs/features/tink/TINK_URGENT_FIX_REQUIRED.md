@@ -47,7 +47,7 @@ This is a **TINK CONSOLE CONFIGURATION ISSUE**, not a code bug.
    - Use your Tink developer credentials
 
 2. **Navigate to Your App Settings**
-   - Find your Stratifi integration app
+   - Find your Stratiri integration app
    - Look for "OAuth" or "Token" settings
 
 3. **Enable Permanent User Access**
@@ -56,7 +56,7 @@ This is a **TINK CONSOLE CONFIGURATION ISSUE**, not a code bug.
    - Enable refresh tokens
 
 4. **Update Redirect URI (if needed)**
-   - Ensure: `https://stratifi.vercel.app/api/banking/tink/callback`
+   - Ensure: `https://stratiri.vercel.app/api/banking/tink/callback`
    - Must match EXACTLY
 
 5. **Save and Test**
@@ -73,7 +73,7 @@ Subject: Enable Permanent User Access for OAuth Integration
 
 Hi Tink Support,
 
-We're integrating Tink banking aggregation into our application (Stratifi) 
+We're integrating Tink banking aggregation into our application (Stratiri) 
 and need to enable permanent user access with refresh tokens.
 
 Current Issue:
@@ -83,7 +83,7 @@ Current Issue:
 
 Our App Details:
 - Client ID: [YOUR_TINK_CLIENT_ID]
-- Redirect URI: https://stratifi.vercel.app/api/banking/tink/callback
+- Redirect URI: https://stratiri.vercel.app/api/banking/tink/callback
 - Integration Type: OAuth 2.0
 
 Requested Configuration:

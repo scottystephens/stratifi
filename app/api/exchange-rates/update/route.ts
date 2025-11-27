@@ -1,133 +1,62 @@
 import { NextResponse } from 'next/server'
-import { upsertExchangeRate } from '@/lib/supabase'
-import { TOP_CURRENCIES, CURRENCY_CODES } from '@/lib/currency'
+import { fetchLatestRates, fetchHistoricalRates, storeRates } from '@/lib/services/exchange-rate-service'
+import { subDays, format } from 'date-fns'
 
-// Frankfurter API - Free, open source, no API key needed
-const FRANKFURTER_API = 'https://api.frankfurter.app'
-
-interface FrankfurterResponse {
-  amount: number
-  base: string
-  date: string
-  rates: Record<string, number>
-}
-
-async function fetchExchangeRates(): Promise<FrankfurterResponse> {
-  const currencies = CURRENCY_CODES.join(',')
-  const url = `${FRANKFURTER_API}/latest?from=USD&to=${currencies}`
-  
-  const response = await fetch(url, {
-    next: { revalidate: 0 }, // Don't cache
-  })
-  
-  if (!response.ok) {
-    throw new Error(`Frankfurter API error: ${response.status} ${response.statusText}`)
-  }
-  
-  return response.json()
-}
+export const maxDuration = 300 // 5 minutes for serverless function
 
 export async function GET(request: Request) {
-  const startTime = Date.now()
-  
   try {
-    // Verify cron secret for scheduled requests
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
     
+    // Simple auth check for cron jobs
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Check if Supabase is configured
-    const useSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    if (!useSupabase) {
-      return NextResponse.json({
-        success: false,
-        error: 'Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.',
-        message: 'Exchange rates update requires Supabase connection',
-      }, { status: 503 })
-    }
-
-    console.log('[Exchange Rates] Starting update...')
-    
-    // Fetch latest rates from Frankfurter
-    const data = await fetchExchangeRates()
-    
-    console.log(`[Exchange Rates] Fetched ${Object.keys(data.rates).length} rates from Frankfurter for ${data.date}`)
-    
-    // Store each rate in database
-    const results = []
-    const errors = []
-    
-    for (const [code, rate] of Object.entries(data.rates)) {
-      try {
-        const currency = TOP_CURRENCIES.find(c => c.code === code)
-        if (!currency) continue
-        
-        const result = await upsertExchangeRate({
-          currencyCode: code,
-          currencyName: currency.name,
-          rate: rate,
-          date: data.date,
-          source: 'frankfurter.app',
-        })
-        
-        results.push({
-          currency: code,
-          rate: rate,
-          success: true,
-        })
-        
-        console.log(`[Exchange Rates] ✓ ${code}: ${rate}`)
-      } catch (error) {
-        console.error(`[Exchange Rates] ✗ ${code}:`, error)
-        errors.push({
-          currency: code,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        })
+      // Allow manual trigger in development or if explicitly allowed
+      const { searchParams } = new URL(request.url)
+      if (searchParams.get('key') !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
     }
-    
-    const duration = Date.now() - startTime
-    
-    const response = {
-      success: true,
-      message: `Updated ${results.length} exchange rates`,
-      date: data.date,
-      source: 'frankfurter.app',
-      baseCurrency: 'USD',
-      updated: results.length,
-      failed: errors.length,
-      duration: `${duration}ms`,
-      results,
-      errors: errors.length > 0 ? errors : undefined,
+
+    const results = []
+
+    // 1. Fetch Latest Rates (Today)
+    console.log('[FX] Starting daily update...')
+    const latestData = await fetchLatestRates()
+    const latestResult = await storeRates(latestData)
+    results.push({ date: 'latest', ...latestResult })
+
+    // 2. Fetch Last 2 Days (Historical) to ensure we have recent history
+    // This covers weekends or missed cron runs
+    const today = new Date()
+    for (let i = 1; i <= 2; i++) {
+      const historicalDate = subDays(today, i)
+      const dateStr = format(historicalDate, 'yyyy-MM-dd')
+      
+      console.log(`[FX] Backfilling historical rates for ${dateStr}...`)
+      try {
+        const histData = await fetchHistoricalRates(dateStr)
+        // Ensure timestamp in data matches requested date (Open Exchange Rates returns timestamp)
+        // storeRates uses the timestamp from the response
+        const histResult = await storeRates(histData)
+        results.push({ date: dateStr, ...histResult })
+      } catch (err) {
+        console.error(`[FX] Failed to fetch historical for ${dateStr}:`, err)
+        results.push({ date: dateStr, error: err instanceof Error ? err.message : 'Unknown error' })
+      }
     }
-    
-    console.log(`[Exchange Rates] ✓ Update complete in ${duration}ms (${results.length} success, ${errors.length} failed)`)
-    
-    return NextResponse.json(response)
-    
+
+    return NextResponse.json({
+      success: true,
+      message: 'Exchange rates updated successfully (Latest + 2 days history)',
+      results
+    })
+
   } catch (error) {
-    console.error('[Exchange Rates] Update failed:', error)
-    
+    console.error('[FX] Update failed:', error)
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        duration: `${Date.now() - startTime}ms`,
-      },
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
 }
-
-// Allow POST as well for manual triggers
-export async function POST(request: Request) {
-  return GET(request)
-}
-

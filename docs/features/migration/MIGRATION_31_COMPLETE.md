@@ -29,7 +29,7 @@ tink_accounts (7 indexes):
   ✓ idx_tink_accounts_account_id
   ✓ idx_tink_accounts_connection
   ✓ idx_tink_accounts_iban
-  ✓ idx_tink_accounts_stratifi_id
+  ✓ idx_tink_accounts_stratiri_id
   ✓ idx_tink_accounts_tenant
   ✓ tink_accounts_connection_id_account_id_key (UNIQUE)
   ✓ tink_accounts_pkey (PRIMARY KEY)
@@ -308,7 +308,7 @@ DROP TABLE IF EXISTS tink_sync_cursors CASCADE;
 
 ### Immediate
 1. **Test Tink connection:**
-   - Go to https://stratifi.vercel.app/connections/new
+   - Go to https://stratiri.vercel.app/connections/new
    - Click "Connect Tink"
    - Complete OAuth flow
    - Verify sync works

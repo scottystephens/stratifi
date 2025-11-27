@@ -7,11 +7,7 @@ import { getProvider } from '@/lib/banking-providers/provider-registry';
 import {
   supabase,
   updateConnection,
-  createIngestionJob,
-  updateIngestionJob,
 } from '@/lib/supabase';
-import { orchestrateSync } from '@/lib/services/sync-orchestrator';
-import { recordSyncFailure } from '@/lib/services/connection-metadata-service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -195,15 +191,7 @@ export async function GET(
         hasRefreshToken: !!tokenData.refresh_token,
       });
 
-      // Create ingestion job for tracking sync progress
-      const ingestionJob = await createIngestionJob({
-        tenant_id: connection.tenant_id,
-        connection_id: connection.id,
-        job_type: `${providerId}_oauth_sync`,
-        status: 'running',
-      });
-
-      // Update connection status and store job ID for UI polling
+      // Update connection status
       await updateConnection(connection.tenant_id, connection.id, {
         status: 'active',
         config: {
@@ -211,7 +199,6 @@ export async function GET(
           provider_user_id: userInfo.userId,
           provider_user_name: userInfo.name,
           connected_at: new Date().toISOString(),
-          sync_job_id: ingestionJob.id, // Store job ID for UI polling
         },
       });
 
@@ -221,74 +208,16 @@ export async function GET(
         .update({ oauth_state: null })
         .eq('id', connection.id);
 
-      // Automatically sync accounts and transactions after successful OAuth
-      // Run inline so we can guarantee completion before redirecting (Lambda may terminate background tasks)
-      let syncWarning: string | null = null;
-
-      try {
-        console.log('🔄 Starting automatic sync after OAuth (inline)...');
-
-        // Get provider and credentials for orchestrator
-        const provider = getProvider(providerId);
-        const credentials = {
-          connectionId: connection.id,
-          tenantId: connection.tenant_id,
-          tokens: {
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token,
-            expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at) : undefined,
-          },
-        };
-
-        const syncResult = await orchestrateSync({
-          provider,
-          connectionId: connection.id,
-          tenantId: connection.tenant_id,
-          credentials,
-          syncAccounts: true,
-          syncTransactions: true,
-          userId: user.id,
-        });
-
-        if (!syncResult.success) {
-          syncWarning = syncResult.errors.join('; ') || 'Sync completed with errors. Please try again.';
-          console.error('❌ OAuth sync completed with warnings:', syncWarning);
-        } else {
-          console.log(`✅ OAuth sync completed:`, {
-            accountsSynced: syncResult.accountsSynced,
-            transactionsSynced: syncResult.transactionsSynced,
-            duration: syncResult.duration,
-          });
-        }
-      } catch (syncError) {
-        console.error('❌ Automatic sync error:', syncError);
-        syncWarning = syncError instanceof Error ? syncError.message : String(syncError);
-
-        // Ensure job is marked as failed
-        await updateIngestionJob(ingestionJob.id, {
-          status: 'failed',
-          error_message: syncWarning,
-          completed_at: new Date().toISOString(),
-        });
-
-        await recordSyncFailure(connection.id, syncWarning);
-      }
-
-      // Redirect to connection details page after sync completes
+      // Prepare redirect URL first (before async operations)
       const redirectUrl = new URL(
         `/connections/${connection.id}`,
         req.url
       );
       redirectUrl.searchParams.set('success', 'true');
       redirectUrl.searchParams.set('message', `Successfully connected to ${provider.config.displayName}`);
-      redirectUrl.searchParams.set('syncing', 'false');
+      redirectUrl.searchParams.set('syncing', 'true'); // Indicate that frontend should trigger sync
 
-      if (syncWarning) {
-        redirectUrl.searchParams.set('warning', syncWarning);
-      } else {
-        redirectUrl.searchParams.set('synced', 'true');
-      }
-
+      // Redirect immediately - client will trigger the sync via handleSync()
       return NextResponse.redirect(redirectUrl);
     } catch (tokenError) {
       console.error('Error during token exchange or user info fetch:', tokenError);
@@ -330,4 +259,3 @@ export async function GET(
     );
   }
 }
-

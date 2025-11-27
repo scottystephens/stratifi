@@ -103,7 +103,7 @@ cd /Users/scottstephens/stratifi && vercel whoami
 cd /Users/scottstephens/stratifi && vercel link
 ```
 
-- Choose the `scottstephens` scope, project `stratifi`.  
+- Choose the `scottstephens` scope, project `stratiri`.  
 - After linking, subsequent deployments inherit settings automatically.
 
 ### 3.3 Deployments
@@ -124,7 +124,7 @@ Capture the deployment URL and share it back in the chat response.
 ### 3.4 Logs and diagnostics
 
 ```bash
-cd /Users/scottstephens/stratifi && vercel logs stratifi.vercel.app --since 1h
+cd /Users/scottstephens/stratifi && vercel logs stratiri.vercel.app --since 1h
 ```
 
 - Use `--follow` for streaming logs (remember to set `is_background: true` if tailing).  

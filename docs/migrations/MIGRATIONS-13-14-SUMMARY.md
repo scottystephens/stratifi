@@ -76,5 +76,5 @@ After these migrations, Tink sync should work successfully:
 ## Next Steps
 
 User should test the sync:
-https://stratifi-pi.vercel.app/connections/724ec2f5-6cd0-49ed-94d1-6ae66f9ebfa7
+https://stratiri-pi.vercel.app/connections/724ec2f5-6cd0-49ed-94d1-6ae66f9ebfa7
 

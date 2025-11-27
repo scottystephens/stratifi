@@ -1,4 +1,4 @@
-# Stratifi Brand Identity
+# Stratiri Brand Identity
 
 **Tagline**: *Strategic Financial Intelligence*
 
@@ -6,7 +6,7 @@
 
 ## 🎨 Brand Concept
 
-**Stratifi** combines "Strategy" + "Finance" - representing intelligent, strategic financial management.
+**Stratiri** combines "Strategy" + "Finance" - representing intelligent, strategic financial management.
 
 ### Brand Personality
 - **Professional** - Enterprise-grade financial platform
@@ -21,15 +21,15 @@
 
 ### Primary Colors
 ```
-Stratifi Blue (Primary)
+Stratiri Blue (Primary)
 - #0066FF - Bright, confident blue
 - Usage: Primary actions, nav highlights, main CTAs
 
-Stratifi Deep Blue (Secondary)
+Stratiri Deep Blue (Secondary)
 - #003D99 - Deep, trustworthy blue
 - Usage: Headers, important text, hover states
 
-Stratifi Navy (Accent)
+Stratiri Navy (Accent)
 - #001F4D - Professional navy
 - Usage: Backgrounds, dark mode, footer
 ```
@@ -262,7 +262,7 @@ Dates: MMM DD, YYYY (e.g., Jan 15, 2025)
 
 ## 🎯 Implementation Checklist
 
-- [ ] Update Tailwind config with Stratifi colors
+- [ ] Update Tailwind config with Stratiri colors
 - [ ] Create logo component
 - [ ] Update navigation with new branding
 - [ ] Redesign pages with better spacing

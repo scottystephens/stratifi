@@ -1,7 +1,7 @@
 # 🔐 Security Review - Executive Summary
 
 **Date:** November 23, 2025  
-**Platform:** Stratifi - Strategic Financial Intelligence  
+**Platform:** Stratiri - Strategic Financial Intelligence  
 **Overall Score:** 🟡 **65/100** (Moderate)
 
 ---
@@ -112,7 +112,7 @@
 ```env
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
-NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
+NEXT_PUBLIC_APP_URL=https://stratiri.vercel.app
 ```
 
 ---
@@ -193,7 +193,7 @@ NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
 
 ## 🏆 Conclusion
 
-**Stratifi has a solid foundation** but needs immediate attention to API security. The platform is **production-ready from a database and encryption standpoint**, but **API endpoints are vulnerable** to abuse.
+**Stratiri has a solid foundation** but needs immediate attention to API security. The platform is **production-ready from a database and encryption standpoint**, but **API endpoints are vulnerable** to abuse.
 
 **Good News:** All critical issues can be fixed in 2 weeks with minimal cost.
 

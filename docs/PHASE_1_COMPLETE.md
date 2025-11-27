@@ -47,7 +47,7 @@
 
 ### Start the dev server:
 ```bash
-cd /Users/scottstephens/stratifi && npm run dev
+cd /Users/scottstephens/stratiri && npm run dev
 ```
 
 ### What to verify:

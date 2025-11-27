@@ -507,7 +507,7 @@ After deployment completes, test the following:
 ## Deployment
 
 - **Commit:** `2226c8e`
-- **Production:** https://stratifi-pi.vercel.app
+- **Production:** https://stratiri-pi.vercel.app
 - **Status:** ✅ Live and ready for testing
 
 Test by connecting a new Plaid account and watching the logs for cursor-based messages!

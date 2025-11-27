@@ -3,7 +3,7 @@ const nextConfig = {
   output: 'standalone',
   
   async headers() {
-    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://stratifi.vercel.app';
+    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://stratiri.vercel.app';
     
     return [
       {

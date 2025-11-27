@@ -267,7 +267,7 @@ Example: recharts treemap
 - [x] Deployed to production
 
 ### 🔄 To Test in Production
-1. **Navigate to entities page** - https://stratifi-pi.vercel.app/entities
+1. **Navigate to entities page** - https://stratiri-pi.vercel.app/entities
 2. **Toggle to Diagram view** - Click "Diagram" button in header
 3. **Verify entity nodes** - Should show entities with stats
 4. **Verify account nodes** - Should show accounts below entities
@@ -347,7 +347,7 @@ style={{
 ---
 
 *Deployed: November 16, 2024*  
-*Production URL: https://stratifi-pi.vercel.app/entities*  
+*Production URL: https://stratiri-pi.vercel.app/entities*  
 *View Mode: Toggle between Grid and Diagram*  
 *Status: ✅ Production Ready*
 

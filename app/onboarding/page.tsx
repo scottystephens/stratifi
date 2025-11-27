@@ -177,7 +177,7 @@ export default function OnboardingPage() {
               Organization URL
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-sm">stratifi.com/</span>
+              <span className="text-gray-500 text-sm">strategicfinance.com/</span>
               <input
                 id="slug"
                 type="text"

@@ -2,7 +2,7 @@
 
 **Date:** November 16, 2025  
 **Status:** ✅ Production-ready and deployed  
-**URL:** https://stratifi-pi.vercel.app
+**URL:** https://stratiri-pi.vercel.app
 
 ---
 
@@ -204,7 +204,7 @@ Comprehensive instructions including:
 
 ### **For Entities:**
 
-1. **Navigate** to https://stratifi-pi.vercel.app/entities
+1. **Navigate** to https://stratiri-pi.vercel.app/entities
 2. **Click** "Bulk Import" button (next to "New Entity")
 3. **Download** the template CSV (or use your own)
 4. **Fill in** your entity data
@@ -362,8 +362,8 @@ Euro Operations,checking,Deutsche Bank,DE89370400440532013000,EUR,Example Corp,2
 
 ## 🎉 **Deployment Status**
 
-✅ **Live on Production:** https://stratifi-pi.vercel.app/entities  
-✅ **Templates Available:** https://stratifi-pi.vercel.app/templates/  
+✅ **Live on Production:** https://stratiri-pi.vercel.app/entities  
+✅ **Templates Available:** https://stratiri-pi.vercel.app/templates/  
 ✅ **API Endpoints:** Deployed and functional  
 ✅ **UI Components:** Integrated into entities page  
 

@@ -126,7 +126,7 @@ CREATE TABLE plaid_transactions (
 CREATE TABLE plaid_accounts (
     account_id TEXT PRIMARY KEY,
     raw_data JSONB,
-    stratifi_account_id UUID REFERENCES accounts(id)
+    stratiri_account_id UUID REFERENCES accounts(id)
 );
 ```
 

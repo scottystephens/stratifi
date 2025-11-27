@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide walks you through integrating Tink as a banking aggregation provider for Stratifi. Tink provides access to 3,500+ European banks through a single API.
+This guide walks you through integrating Tink as a banking aggregation provider for Stratiri. Tink provides access to 3,500+ European banks through a single API.
 
 ---
 
@@ -23,7 +23,7 @@ This guide walks you through integrating Tink as a banking aggregation provider 
    - **Redirect URI** (set to: `https://yourdomain.com/api/banking/tink/callback`)
 
 ### 1.3 Configure OAuth Settings
-- Set redirect URI: `https://stratifi-pi.vercel.app/api/banking/tink/callback`
+- Set redirect URI: `https://stratiri-pi.vercel.app/api/banking/tink/callback`
 - Select scopes: `accounts:read`, `transactions:read`
 - Save configuration
 
@@ -37,7 +37,7 @@ Add to `.env.local` and Vercel:
 # Tink OAuth Configuration
 TINK_CLIENT_ID=your_client_id_here
 TINK_CLIENT_SECRET=your_client_secret_here
-TINK_REDIRECT_URI=https://stratifi-pi.vercel.app/api/banking/tink/callback
+TINK_REDIRECT_URI=https://stratiri-pi.vercel.app/api/banking/tink/callback
 
 # Tink API URLs (usually these defaults)
 TINK_API_BASE_URL=https://api.tink.com

@@ -1,8 +1,8 @@
-# Stratifi - Project Overview
+# Stratiri - Project Overview
 
 ## 🎯 What Was Built
 
-Stratifi is a fully functional treasury management system prototype modeled after Treasury4. It's production-ready in architecture and can be easily scaled with real databases and external integrations.
+Stratiri is a fully functional treasury management system prototype modeled after Treasury4. It's production-ready in architecture and can be easily scaled with real databases and external integrations.
 
 ## 📊 Core Modules
 
@@ -111,7 +111,7 @@ Stratifi is a fully functional treasury management system prototype modeled afte
 ## 📁 Project Structure
 
 ```
-stratifi/
+stratiri/
 ├── app/
 │   ├── api/              # API routes
 │   │   ├── accounts/

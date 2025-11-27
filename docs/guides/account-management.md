@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stratifi's account management system handles the creation, syncing, and lifecycle management of financial accounts from multiple sources (manual entry, CSV import, banking providers).
+Stratiri's account management system handles the creation, syncing, and lifecycle management of financial accounts from multiple sources (manual entry, CSV import, banking providers).
 
 ## Features
 
@@ -118,7 +118,7 @@ Automatic sync from connected banks (Tink, Bunq, etc.).
 ### Database Structure
 
 ```
-accounts (main Stratifi accounts)
+accounts (main Stratiri accounts)
     ↕
 provider_accounts (links to external accounts)
     ↕

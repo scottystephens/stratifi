@@ -1,5 +1,5 @@
 -- =====================================================
--- Stratifi - Generic Banking Provider Support
+-- Stratiri - Generic Banking Provider Support
 -- Extends the existing schema to support multiple banking providers
 -- =====================================================
 
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS provider_accounts (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   connection_id UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE,
   provider_id TEXT NOT NULL REFERENCES banking_providers(id) ON DELETE CASCADE,
-  account_id TEXT REFERENCES accounts(account_id) ON DELETE SET NULL, -- Link to Stratifi account
+  account_id TEXT REFERENCES accounts(account_id) ON DELETE SET NULL, -- Link to Stratiri account
   
   -- Provider account data
   external_account_id TEXT NOT NULL, -- Account ID in provider's system
@@ -463,7 +463,7 @@ $$;
 
 COMMENT ON TABLE banking_providers IS 'Registry of available banking providers (Bunq, Plaid, etc.)';
 COMMENT ON TABLE provider_tokens IS 'OAuth/API tokens for all banking providers';
-COMMENT ON TABLE provider_accounts IS 'Accounts from all banking providers mapped to Stratifi accounts';
+COMMENT ON TABLE provider_accounts IS 'Accounts from all banking providers mapped to Stratiri accounts';
 COMMENT ON TABLE provider_transactions IS 'Transactions from all providers before import to main table';
 
 COMMENT ON COLUMN provider_tokens.provider_id IS 'References banking_providers.id (e.g., bunq, plaid, nordigen)';

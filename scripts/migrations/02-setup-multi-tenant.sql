@@ -1,5 +1,5 @@
 -- =====================================================
--- Stratifi Multi-Tenant Database Setup
+-- Stratiri Multi-Tenant Database Setup
 -- Production-Quality Multi-Tenancy with RLS
 -- =====================================================
 

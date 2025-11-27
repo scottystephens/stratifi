@@ -1,10 +1,10 @@
 entityId,entityName,legalName,country,taxId,entityType,parentEntity,status,incorporationDate
-ENT001,Stratifi USA,"Stratifi Inc.",USA,12-3456789,Corporation,,Active,2020-01-15
-ENT002,Stratifi UK,"Stratifi Limited",United Kingdom,GB123456789,Limited Company,ENT001,Active,2020-06-01
-ENT003,Stratifi Europe,"Stratifi GmbH",Germany,DE987654321,GmbH,ENT001,Active,2020-09-15
-ENT004,Stratifi Singapore,"Stratifi Pte Ltd",Singapore,202012345A,Private Limited,ENT001,Active,2021-02-01
-ENT005,Stratifi Japan,"Stratifi KK",Japan,1234567890123,Kabushiki Kaisha,ENT001,Active,2021-05-20
-ENT006,Stratifi Canada,"Stratifi Corp",Canada,123456789RC0001,Corporation,ENT001,Active,2021-08-10
-ENT007,Stratifi Australia,"Stratifi Pty Ltd",Australia,12345678901,Proprietary Limited,ENT001,Active,2022-01-05
-ENT008,Stratifi Mexico,"Stratifi SA de CV",Mexico,TMX2022010112345,SA de CV,ENT001,Pending,2024-03-15
+ENT001,Stratiri USA,"Stratiri Inc.",USA,12-3456789,Corporation,,Active,2020-01-15
+ENT002,Stratiri UK,"Stratiri Limited",United Kingdom,GB123456789,Limited Company,ENT001,Active,2020-06-01
+ENT003,Stratiri Europe,"Stratiri GmbH",Germany,DE987654321,GmbH,ENT001,Active,2020-09-15
+ENT004,Stratiri Singapore,"Stratiri Pte Ltd",Singapore,202012345A,Private Limited,ENT001,Active,2021-02-01
+ENT005,Stratiri Japan,"Stratiri KK",Japan,1234567890123,Kabushiki Kaisha,ENT001,Active,2021-05-20
+ENT006,Stratiri Canada,"Stratiri Corp",Canada,123456789RC0001,Corporation,ENT001,Active,2021-08-10
+ENT007,Stratiri Australia,"Stratiri Pty Ltd",Australia,12345678901,Proprietary Limited,ENT001,Active,2022-01-05
+ENT008,Stratiri Mexico,"Stratiri SA de CV",Mexico,TMX2022010112345,SA de CV,ENT001,Pending,2024-03-15
 

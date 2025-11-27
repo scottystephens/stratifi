@@ -237,7 +237,7 @@ const { data: providerTx } = await supabase.from('provider_transactions').upsert
 const mainTxId = `${providerId}-${transaction.externalTransactionId}`;
 const { data: mainTx } = await supabase.from('transactions').upsert({
   transaction_id: mainTxId,
-  account_id: stratifiAccountId,
+  account_id: stratiriAccountId,
   date: transaction.date.toISOString().split('T')[0],
   // ... other fields ...
 }).select().single();

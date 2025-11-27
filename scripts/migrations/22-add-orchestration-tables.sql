@@ -1,5 +1,5 @@
 -- =====================================================
--- Stratifi - Data Orchestration Infrastructure
+-- Stratiri - Data Orchestration Infrastructure
 -- Adds sync scheduling, health tracking, and API quota monitoring
 -- =====================================================
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide documents the production-level implementation of account creation, deduplication, and connection metadata tracking in Stratifi. This implementation follows industry best practices for data integrity, performance, and user experience.
+This guide documents the production-level implementation of account creation, deduplication, and connection metadata tracking in Stratiri. This implementation follows industry best practices for data integrity, performance, and user experience.
 
 ---
 
@@ -36,12 +36,12 @@ This guide documents the production-level implementation of account creation, de
 │  - Raw data from banking providers                  │
 │  - External account IDs                             │
 │  - Provider-specific metadata                       │
-│  - Links to Stratifi accounts via foreign key      │
+│  - Links to Stratiri accounts via foreign key      │
 └──────────────────┬──────────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────────┐
-│  ACCOUNTS TABLE (Stratifi)                          │
+│  ACCOUNTS TABLE (Stratiri)                          │
 │  - Normalized account records                       │
 │  - User-editable information                        │
 │  - Multi-provider support (one account, many links)│
@@ -170,7 +170,7 @@ CREATE TABLE provider_accounts (
   connection_id UUID NOT NULL REFERENCES connections(id),
   provider_id TEXT NOT NULL,
   
-  -- Link to Stratifi account (FIXED: now UUID type)
+  -- Link to Stratiri account (FIXED: now UUID type)
   account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
   
   -- Provider data
@@ -316,7 +316,7 @@ await recordSyncSuccess(connectionId);
 
 ```typescript
 1. User completes OAuth at provider
-2. Stratifi receives callback with authorization code
+2. Stratiri receives callback with authorization code
 3. Exchange code for access token
 4. Store token in provider_tokens table
 5. Update connection status to 'active'
@@ -586,7 +586,7 @@ await refreshConnectionMetadata(connectionId)
 
 ✅ **Use transactions for critical operations**:
 ```typescript
-// Provider account and Stratifi account should be created atomically
+// Provider account and Stratiri account should be created atomically
 // Current implementation handles this via upserts
 ```
 

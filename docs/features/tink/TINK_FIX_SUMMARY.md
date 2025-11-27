@@ -150,10 +150,10 @@ vercel --prod
    ```
 
 2. **Create new Tink connection:**
-   - Go to: https://stratifi.vercel.app/connections/new
+   - Go to: https://stratiri.vercel.app/connections/new
    - Click "Connect Tink"
    - Complete OAuth flow
-   - Verify redirect back to Stratifi
+   - Verify redirect back to Stratiri
 
 3. **Trigger sync:**
    - The sync should happen automatically after OAuth
@@ -370,7 +370,7 @@ If issues persist:
 
 1. **Check logs:**
    ```bash
-   vercel logs stratifi.vercel.app --follow
+   vercel logs stratiri.vercel.app --follow
    ```
 
 2. **Check token status:**
@@ -385,7 +385,7 @@ If issues persist:
 
 4. **Manual sync:**
    ```bash
-   curl -X POST https://stratifi.vercel.app/api/banking/tink/sync \
+   curl -X POST https://stratiri.vercel.app/api/banking/tink/sync \
      -H "Content-Type: application/json" \
      -d '{"connectionId": "YOUR_CONNECTION_ID"}'
    ```

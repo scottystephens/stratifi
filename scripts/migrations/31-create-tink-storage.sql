@@ -223,7 +223,7 @@ CREATE TABLE IF NOT EXISTS tink_accounts (
     raw_data JSONB NOT NULL,
     
     -- Link to our normalized account
-    stratifi_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    stratiri_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     
     -- Tracking
     first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -266,7 +266,7 @@ USING (
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_tenant ON tink_accounts(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_connection ON tink_accounts(connection_id);
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_account_id ON tink_accounts(account_id);
-CREATE INDEX IF NOT EXISTS idx_tink_accounts_stratifi_id ON tink_accounts(stratifi_account_id);
+CREATE INDEX IF NOT EXISTS idx_tink_accounts_stratiri_id ON tink_accounts(stratiri_account_id);
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_iban ON tink_accounts(iban) WHERE iban IS NOT NULL;
 
 -- =====================================================

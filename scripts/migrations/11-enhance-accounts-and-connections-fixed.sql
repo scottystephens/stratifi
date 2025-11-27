@@ -135,7 +135,7 @@ BEGIN
   RAISE NOTICE 'Added foreign key: provider_accounts.account_id -> accounts.id';
 END $$;
 
-COMMENT ON COLUMN provider_accounts.account_id IS 'Links to accounts(id) - the normalized Stratifi account UUID';
+COMMENT ON COLUMN provider_accounts.account_id IS 'Links to accounts(id) - the normalized Stratiri account UUID';
 
 -- =====================================================
 -- PART 2: Add Connection Metadata Fields

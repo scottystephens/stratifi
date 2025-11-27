@@ -6,12 +6,17 @@ import { TenantProvider } from "@/lib/tenant-context"
 import { ReactQueryProvider } from "@/lib/react-query-provider"
 import { Toaster } from "sonner"
 
-const inter = Inter({ subsets: ["latin"] })
+// Universal font - clean, readable, professional
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
-  title: "Stratifi - Strategic Financial Intelligence",
-  description: "Multi-tenant treasury management platform with intelligent data ingestion, account management, and real-time financial insights",
-  keywords: ["treasury management", "financial intelligence", "cash management", "multi-tenant", "data ingestion", "bank reconciliation"],
+  title: "Strategic Finance Platform",
+  description: "Connect to global banks with real-time cash visibility, analytics, and treasury intelligence.",
+  keywords: ["treasury management", "cash management", "financial intelligence", "multi-currency", "bank connectivity", "cash forecasting"],
 }
 
 export default function RootLayout({
@@ -20,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={inter.variable}>
+      <body className="bg-stone-50">
         <ReactQueryProvider>
           <AuthProvider>
             <TenantProvider>
@@ -34,4 +39,3 @@ export default function RootLayout({
     </html>
   )
 }
-

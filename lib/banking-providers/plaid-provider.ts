@@ -52,7 +52,7 @@ export class PlaidProvider extends BankingProvider {
 
       const response = await plaidClient.linkTokenCreate({
         user: { client_user_id: userId },
-        client_name: 'Stratifi',
+        client_name: 'Stratiri',
         products: PLAID_PRODUCTS as Products[],
         country_codes: PLAID_COUNTRY_CODES as CountryCode[],
         language: 'en',

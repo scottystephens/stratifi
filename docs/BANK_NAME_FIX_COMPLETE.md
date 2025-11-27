@@ -248,7 +248,7 @@ Manual Account        | Bank of America| Manual   ✅
 
 2. **Deploy to Production:**
    ```bash
-   cd /Users/scottstephens/stratifi && vercel --prod
+   cd /Users/scottstephens/stratiri && vercel --prod
    ```
 
 3. **(Optional) Backfill Existing Accounts:**

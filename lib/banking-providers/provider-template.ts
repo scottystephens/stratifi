@@ -488,7 +488,7 @@ export class ProviderTemplate extends BankingProvider {
 
   /**
    * TODO: Implement account type mapping
-   * Map provider's account types to Stratifi's standard types
+   * Map provider's account types to Stratiri's standard types
    */
   mapAccountType(providerAccountType: string): string {
     // TODO: Map provider's account types to standard types

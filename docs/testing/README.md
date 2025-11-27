@@ -1,6 +1,6 @@
 # Testing Documentation Index
 
-This directory contains all testing-related documentation for Stratifi.
+This directory contains all testing-related documentation for Stratiri.
 
 ## 📁 Directory Structure
 

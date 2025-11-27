@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide documents the complete Plaid integration for Stratifi, including setup, architecture, troubleshooting, and lessons learned during implementation.
+This guide documents the complete Plaid integration for Stratiri, including setup, architecture, troubleshooting, and lessons learned during implementation.
 
 ## Table of Contents
 
@@ -144,7 +144,7 @@ echo "6918ea73ca21950020011c9e" | vercel env add PLAID_CLIENT_ID production
 
 Run this script:
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 export $(cat .env.local | grep -v '^#' | xargs)
 npx tsx scripts/utilities/add-plaid-provider.ts
 ```
@@ -232,7 +232,7 @@ const { open, ready } = usePlaidLink({
 
 #### Account Types
 ```typescript
-Plaid → Stratifi
+Plaid → Stratiri
 - depository/checking → checking
 - depository/savings → savings
 - credit → credit_card
@@ -298,7 +298,7 @@ error_message: 'the requested product is not yet ready. please provide a webhook
 4. **Webhook**: Plaid sends `INITIAL_UPDATE` when first batch ready
 5. **Webhook**: Plaid sends `HISTORICAL_UPDATE` when all history loaded
 
-**What you'll see in Stratifi**:
+**What you'll see in Stratiri**:
 - ✅ Account appears immediately (e.g., "Plaid Checking")
 - ✅ Current balance displayed
 - ⏳ Transactions: "No transactions found - Try syncing"
@@ -545,5 +545,5 @@ For issues:
 
 **Last Updated**: November 21, 2025
 **Integration Status**: ✅ Production Ready (Sandbox)
-**Author**: Stratifi Engineering Team
+**Author**: Stratiri Engineering Team
 

@@ -1,5 +1,5 @@
 -- =====================================================
--- Stratifi Base Tables
+-- Stratiri Base Tables
 -- Core financial data tables (before multi-tenancy)
 -- =====================================================
 

@@ -1,4 +1,4 @@
-# Stratifi Account Detail - Before & After
+# Stratiri Account Detail - Before & After
 
 ## 🎯 Changes Summary
 
@@ -192,7 +192,7 @@ Nov 21  [Debit]    Amazon purchase            -$45.67     (red)
 
 **Status:** ✅ Deployed to Production
 
-**URL:** https://stratifi.vercel.app/accounts/[account-id]
+**URL:** https://stratiri.vercel.app/accounts/[account-id]
 
 **Git Commit:** 698adf5
 ```

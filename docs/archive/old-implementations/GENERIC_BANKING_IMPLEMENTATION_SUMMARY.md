@@ -2,7 +2,7 @@
 
 ## 📋 Executive Summary
 
-Stratifi now has a **production-ready, fully generic banking provider architecture** that allows you to add unlimited banking integrations with minimal effort. What previously took days now takes **~15 minutes per provider**.
+Stratiri now has a **production-ready, fully generic banking provider architecture** that allows you to add unlimited banking integrations with minimal effort. What previously took days now takes **~15 minutes per provider**.
 
 ### What Changed
 
@@ -71,7 +71,7 @@ New universal tables:
 
 #### `provider_accounts`
 - Accounts from ALL providers
-- Links to Stratifi accounts
+- Links to Stratiri accounts
 - Replaces bunq_accounts  
 - Auto-migrated existing Bunq data
 

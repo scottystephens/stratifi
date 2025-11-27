@@ -256,7 +256,7 @@ Instead of building direct bank integrations (like Bunq), you can use a **bankin
 
 ---
 
-## For Stratifi Specifically
+## For Stratiri Specifically
 
 ### Current Situation
 - ✅ Multi-tenant SaaS platform

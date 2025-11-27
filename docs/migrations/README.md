@@ -1,6 +1,6 @@
 # Database Migrations Documentation
 
-This directory contains documentation about database migrations for Stratifi.
+This directory contains documentation about database migrations for Stratiri.
 
 ---
 
@@ -42,7 +42,7 @@ See [scripts/README.md](../../scripts/README.md) for how to run migrations.
 
 ### Preferred Method: Supabase CLI
 ```bash
-cd /Users/scottstephens/stratifi && npx tsx scripts/utilities/run-migration-cli.ts scripts/migrations/XX-name.sql
+cd /Users/scottstephens/stratiri && npx tsx scripts/utilities/run-migration-cli.ts scripts/migrations/XX-name.sql
 ```
 
 ### Alternative: SQL Editor

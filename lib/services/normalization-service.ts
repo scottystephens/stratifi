@@ -1,7 +1,7 @@
 /**
  * Normalization Service
  *
- * Transforms raw JSONB data from provider APIs into standard Stratifi
+ * Transforms raw JSONB data from provider APIs into standard Stratiri
  * account and transaction formats. This service is the single source
  * of truth for mapping logic and ensures consistent data normalization
  * across all providers.
@@ -9,6 +9,31 @@
 
 import { supabase } from '@/lib/supabase';
 import type { ProviderAccount, ProviderTransaction } from '@/lib/banking-providers/base-provider';
+
+/**
+ * Parse Xero's date format: "/Date(1757808000000+0000)/" or ISO string
+ * Returns a Date object
+ */
+function parseXeroDate(dateValue: string | null | undefined): Date {
+  if (!dateValue) return new Date();
+  
+  // Handle Xero's /Date(timestamp)/ format
+  const timestampMatch = dateValue.match(/\/Date\((\d+)([+-]\d{4})?\)\//);
+  if (timestampMatch) {
+    const timestamp = parseInt(timestampMatch[1], 10);
+    return new Date(timestamp);
+  }
+  
+  // Handle ISO string format or other parseable formats
+  const parsed = new Date(dateValue);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
+  }
+  
+  // Fallback to current date if parsing fails
+  console.warn(`[Normalization] Failed to parse Xero date: ${dateValue}`);
+  return new Date();
+}
 
 export class NormalizationService {
 
@@ -288,6 +313,217 @@ export class NormalizationService {
   }
 
   // ==========================================
+  // XERO NORMALIZATION
+  // ==========================================
+
+  /**
+   * Transform raw Xero account data into standard ProviderAccount format
+   * Now includes balance data from Bank Summary report
+   */
+  async normalizeXeroAccounts(connectionId: string, tenantId: string): Promise<ProviderAccount[]> {
+    console.log(`[Normalization] Normalizing Xero accounts for connection ${connectionId}`);
+
+    // Fetch raw Xero accounts
+    const { data: rawAccounts, error } = await supabase
+      .from('xero_accounts')
+      .select('*')
+      .eq('connection_id', connectionId);
+
+    if (error) {
+      console.error('[Normalization] Failed to fetch raw Xero accounts:', error);
+      throw new Error(`Failed to fetch raw Xero accounts: ${error.message}`);
+    }
+
+    if (!rawAccounts || rawAccounts.length === 0) {
+      console.log(`[Normalization] No raw Xero accounts found for connection ${connectionId}`);
+      return [];
+    }
+
+    // Fetch stored balances from xero_balances table (if available)
+    const { data: storedBalances } = await supabase
+      .from('xero_balances')
+      .select('*')
+      .eq('connection_id', connectionId)
+      .order('balance_date', { ascending: false });
+
+    // Create balance lookup map (latest balance per account)
+    const balanceMap = new Map<string, { closing_balance: number; opening_balance: number; balance_date: string }>();
+    storedBalances?.forEach(b => {
+      if (!balanceMap.has(b.account_id)) {
+        balanceMap.set(b.account_id, {
+          closing_balance: b.closing_balance,
+          opening_balance: b.opening_balance,
+          balance_date: b.balance_date,
+        });
+      }
+    });
+
+    console.log(`[Normalization] Found ${balanceMap.size} account balances from xero_balances`);
+
+    // Filter to only BANK type accounts and transform to standard ProviderAccount format
+    const normalizedAccounts = rawAccounts
+      .filter((raw) => {
+        const account = raw.raw_account_data as any;
+        return account.Type === 'BANK' && account.Status === 'ACTIVE';
+      })
+      .map((raw) => {
+        const account = raw.raw_account_data as any;
+        const accountId = account.AccountID;
+        
+        // Get balance from stored balances
+        const balanceData = balanceMap.get(accountId);
+        const balance = balanceData?.closing_balance ?? 0;
+
+        console.log(`[Normalization] Account ${account.Name}: balance = ${balance} (from ${balanceData ? 'xero_balances' : 'default'})`);
+
+        return {
+          externalAccountId: accountId,
+          accountName: account.Name,
+          accountNumber: account.BankAccountNumber || undefined,
+          accountType: this.mapXeroAccountType(account.Type, account.BankAccountType),
+          currency: account.CurrencyCode || 'USD',
+          balance, // Now populated from Bank Summary report!
+          status: account.Status === 'ACTIVE' ? ('active' as const) : ('inactive' as const),
+          institutionName: 'Xero',
+          metadata: {
+            xero_account_id: accountId,
+            code: account.Code,
+            name: account.Name,
+            type: account.Type,
+            class: account.Class,
+            description: account.Description,
+            tax_type: account.TaxType,
+            bank_account_type: account.BankAccountType,
+            currency_code: account.CurrencyCode,
+            xero_tenant_id: raw.xero_tenant_id,
+            // Balance metadata
+            opening_balance: balanceData?.opening_balance,
+            closing_balance: balanceData?.closing_balance,
+            balance_date: balanceData?.balance_date,
+            // Preserve complete Xero data
+            raw_xero_account: account,
+          },
+        };
+      });
+
+    console.log(`[Normalization] Normalized ${normalizedAccounts.length} Xero accounts with balances`);
+    return normalizedAccounts;
+  }
+
+  /**
+   * Transform raw Xero transaction data into standard ProviderTransaction format
+   */
+  async normalizeXeroTransactions(connectionId: string): Promise<ProviderTransaction[]> {
+    console.log(`[Normalization] Normalizing Xero transactions for connection ${connectionId}`);
+
+    // Fetch raw Xero transactions
+    const { data: rawTxs, error } = await supabase
+      .from('xero_transactions')
+      .select('*')
+      .eq('connection_id', connectionId);
+
+    if (error) {
+      console.error('[Normalization] Failed to fetch raw Xero transactions:', error);
+      throw new Error(`Failed to fetch raw Xero transactions: ${error.message}`);
+    }
+
+    if (!rawTxs || rawTxs.length === 0) {
+      console.log(`[Normalization] No raw Xero transactions found for connection ${connectionId}`);
+      return [];
+    }
+
+    // Create a map of external account IDs to internal account IDs
+    const { data: accounts, error: accountsError } = await supabase
+      .from('accounts')
+      .select('account_id, id, external_account_id')
+      .eq('connection_id', connectionId);
+
+    if (accountsError) {
+      console.error('[Normalization] Failed to fetch accounts for mapping:', accountsError);
+    }
+
+    const accountIdMap = new Map<string, string>();
+    console.log(`[Normalization] Building account ID map from ${accounts?.length || 0} accounts:`);
+    accounts?.forEach(account => {
+      if (account.external_account_id) {
+        // Use account_id (TEXT primary key) for transaction foreign key
+        accountIdMap.set(account.external_account_id, account.account_id);
+        console.log(`[Normalization]   ${account.external_account_id} -> ${account.account_id}`);
+      }
+    });
+
+    const normalizedTxs = rawTxs
+      .filter((raw) => {
+        const tx = raw.raw_transaction_data as any;
+        // Only include AUTHORISED or SUBMITTED transactions
+        return tx.Status === 'AUTHORISED' || tx.Status === 'SUBMITTED';
+      })
+      .map((raw) => {
+        const tx = raw.raw_transaction_data as any;
+        const externalAccountId = tx.BankAccount?.AccountID || raw.account_id;
+        const internalAccountId = accountIdMap.get(externalAccountId);
+        
+        // Log mapping for debugging
+        if (!internalAccountId) {
+          console.warn(`[Normalization] ⚠️ No internal account found for external ID: ${externalAccountId}`);
+        }
+
+        // Determine if transaction is credit or debit
+        const isCredit = tx.Type === 'RECEIVE' || tx.Type === 'RECEIVE-OVERPAYMENT';
+        const amount = Math.abs(tx.Total || 0);
+
+        // Get description from various sources
+        const description =
+          tx.Reference ||
+          tx.LineItems?.[0]?.Description ||
+          tx.Contact?.Name ||
+          'Xero Transaction';
+
+        // Skip transactions without a valid internal account ID
+        if (!internalAccountId) {
+          return null;
+        }
+
+        return {
+          externalTransactionId: tx.BankTransactionID,
+          accountId: internalAccountId,
+          date: parseXeroDate(tx.Date || tx.DateString),  // Use Xero-specific date parser
+          amount,
+          currency: tx.CurrencyCode || 'USD',
+          description,
+          type: (isCredit ? 'credit' : 'debit') as 'credit' | 'debit',
+          status: tx.Status === 'AUTHORISED' ? ('posted' as const) : ('pending' as const),
+          counterpartyName: tx.Contact?.Name || undefined,
+          reference: tx.Reference || undefined,
+          category: tx.LineItems?.[0]?.AccountCode || undefined,
+          metadata: {
+            xero_transaction_id: tx.BankTransactionID,
+            xero_tenant_id: raw.xero_tenant_id,
+            type: tx.Type,
+            status: tx.Status,
+            sub_total: tx.SubTotal,
+            total_tax: tx.TotalTax,
+            total: tx.Total,
+            is_reconciled: tx.IsReconciled,
+            contact: tx.Contact,
+            line_items: tx.LineItems,
+            updated_date_utc: tx.UpdatedDateUTC,
+            // Preserve complete Xero data
+            raw_xero_transaction: tx,
+          },
+        };
+      })
+      .filter((tx): tx is NonNullable<typeof tx> => tx !== null); // Filter out null entries
+
+    const skipped = rawTxs.length - normalizedTxs.length;
+    if (skipped > 0) {
+      console.warn(`[Normalization] ⚠️ Skipped ${skipped} transactions due to missing account mappings`);
+    }
+    console.log(`[Normalization] Normalized ${normalizedTxs.length} Xero transactions`);
+    return normalizedTxs;
+  }
+
+  // ==========================================
   // DIRECT BANK NORMALIZATION (Universal)
   // ==========================================
 
@@ -416,7 +652,7 @@ export class NormalizationService {
   // ==========================================
 
   /**
-   * Map Plaid account types to Stratifi standard types
+   * Map Plaid account types to Stratiri standard types
    */
   private mapPlaidAccountType(type: string, subtype?: string): string {
     const typeMap: Record<string, string> = {
@@ -450,7 +686,7 @@ export class NormalizationService {
   }
 
   /**
-   * Map Tink account types to Stratifi standard types
+   * Map Tink account types to Stratiri standard types
    */
   private mapTinkAccountType(type: string): string {
     const typeMap: Record<string, string> = {
@@ -468,7 +704,25 @@ export class NormalizationService {
   }
 
   /**
-   * Map direct bank account types to Stratifi standard types
+   * Map Xero account types to Stratiri standard types
+   */
+  private mapXeroAccountType(xeroType: string, bankAccountType?: string): string {
+    // Map Xero account types to Stratiri standard types
+    if (xeroType === 'BANK') {
+      if (bankAccountType === 'CREDITCARD') {
+        return 'credit_card';
+      }
+      if (bankAccountType === 'SAVINGS') {
+        return 'savings';
+      }
+      return 'checking'; // Default for BANK type
+    }
+
+    return 'other';
+  }
+
+  /**
+   * Map direct bank account types to Stratiri standard types
    */
   private mapDirectBankAccountType(type: string, providerId: string): string {
     // Provider-specific mappings

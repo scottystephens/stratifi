@@ -150,6 +150,8 @@ export async function POST(req: NextRequest) {
                 refreshToken: tokenData.refresh_token,
                 expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at) : undefined,
               },
+              // Include provider metadata (e.g., plaid item_id)
+              metadata: tokenData.provider_metadata || {},
             };
 
             // STEP 1: Fetch accounts first to detect reconnection

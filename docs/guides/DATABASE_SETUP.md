@@ -5,11 +5,11 @@
 ### 1. Create Vercel Postgres Database
 
 1. Go to your Vercel Dashboard: https://vercel.com/dashboard
-2. Select your `stratifi` project
+2. Select your `stratiri` project
 3. Go to **Storage** tab
 4. Click **Create Database**
 5. Select **Postgres**
-6. Choose a database name (e.g., `stratifi-db`)
+6. Choose a database name (e.g., `stratiri-db`)
 7. Select region (choose closest to your users)
 8. Click **Create**
 
@@ -66,7 +66,7 @@ npm install -g ts-node
 Run the backfill script:
 
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 
 # Set your database URL
 export DATABASE_URL="your-connection-string-here"
@@ -86,7 +86,7 @@ This will:
 Test the update endpoint:
 
 ```bash
-curl -X POST https://stratifi-pi.vercel.app/api/exchange-rates/update
+curl -X POST https://stratiri-pi.vercel.app/api/exchange-rates/update
 ```
 
 You should see:
@@ -105,7 +105,7 @@ You should see:
 ### 6. Verify Data
 
 ```bash
-curl https://stratifi-pi.vercel.app/api/exchange-rates
+curl https://stratiri-pi.vercel.app/api/exchange-rates
 ```
 
 You should see real rates instead of fallback data.
@@ -181,7 +181,7 @@ CRON_SECRET=your-generated-secret
 
 3. Update endpoint will now require authentication:
 ```bash
-curl -X POST https://stratifi-pi.vercel.app/api/exchange-rates/update \
+curl -X POST https://stratiri-pi.vercel.app/api/exchange-rates/update \
   -H "Authorization: Bearer your-generated-secret"
 ```
 
@@ -221,7 +221,7 @@ LIMIT 30;
 ## Next Steps
 
 After setup:
-1. ✅ Visit https://stratifi-pi.vercel.app/rates
+1. ✅ Visit https://stratiri-pi.vercel.app/rates
 2. ✅ Verify no "Using Fallback Data" warning
 3. ✅ See 20 currencies with real rates
 4. ✅ Check "Last updated" date

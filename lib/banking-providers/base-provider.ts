@@ -308,7 +308,7 @@ export abstract class BankingProvider {
   abstract getErrorMessage(error: any): string;
 
   /**
-   * Map provider account type to Stratifi account type
+   * Map provider account type to Stratiri account type
    * @param providerAccountType - Account type from provider
    */
   abstract mapAccountType(providerAccountType: string): string;

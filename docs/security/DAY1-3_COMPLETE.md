@@ -213,14 +213,14 @@ Retry-After: 900
 UPSTASH_REDIS_REST_URL=your_upstash_url
 UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 
-# Required - for CORS (defaults to stratifi.vercel.app)
-NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
+# Required - for CORS (defaults to stratiri.vercel.app)
+NEXT_PUBLIC_APP_URL=https://stratiri.vercel.app
 ```
 
 ### Deployment Commands
 ```bash
 # Deploy to Vercel
-cd /Users/scottstephens/stratifi && vercel --prod
+cd /Users/scottstephens/stratiri && vercel --prod
 
 # Or build and test locally first
 npm run build

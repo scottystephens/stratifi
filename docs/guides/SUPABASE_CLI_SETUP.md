@@ -4,7 +4,7 @@ This guide explains how to configure Supabase CLI so that Cursor can run command
 
 ## Prerequisites
 
-- Supabase account with access to the Stratifi project
+- Supabase account with access to the Stratiri project
 - Project Reference: `vnuithaqtpgbwmdvtxik`
 
 ## Quick Setup
@@ -54,7 +54,7 @@ export SUPABASE_ACCESS_TOKEN='your-token-here'
 Link your local project to the remote Supabase project:
 
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 supabase link --project-ref vnuithaqtpgbwmdvtxik
 ```
 
@@ -187,7 +187,7 @@ Once configured, Cursor can run Supabase CLI commands directly. For example:
 
 ```bash
 # In Cursor terminal
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 supabase db execute --file scripts/migrations/11-enhance-accounts-and-connections-fixed.sql
 ```
 

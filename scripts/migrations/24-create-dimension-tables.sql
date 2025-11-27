@@ -1,5 +1,5 @@
 -- =====================================================
--- Core Dimension Tables for Stratifi
+-- Core Dimension Tables for Stratiri
 -- Migration 24: Add dimension tables for currencies, countries, account types, etc.
 -- =====================================================
 

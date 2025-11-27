@@ -1,6 +1,6 @@
 # Tests Directory
 
-This directory contains all tests for the Stratifi application.
+This directory contains all tests for the Stratiri application.
 
 ## Structure
 

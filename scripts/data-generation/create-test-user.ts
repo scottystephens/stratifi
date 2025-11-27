@@ -28,8 +28,8 @@ async function createTestUser() {
     
     const usersData = await usersResponse.json();
     const testUsers = usersData.users?.filter((u: any) => 
-      u.email === 'demo@stratifi.com' || 
-      u.email === 'test@stratifi.com'
+      u.email === 'demo@stratiri.com' || 
+      u.email === 'test@stratiri.com'
     );
     
     // Delete existing test users
@@ -55,7 +55,7 @@ async function createTestUser() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        email: 'test@stratifi.com',
+        email: 'test@stratiri.com',
         password: 'test123456',
         email_confirm: true,  // Pre-confirm email
         user_metadata: {
@@ -71,7 +71,7 @@ async function createTestUser() {
       console.log('🎉 FRESH TEST USER CREATED!');
       console.log('');
       console.log('═══════════════════════════════════════');
-      console.log('Email:    test@stratifi.com');
+      console.log('Email:    test@stratiri.com');
       console.log('Password: test123456');
       console.log('═══════════════════════════════════════');
       console.log('');
@@ -80,7 +80,7 @@ async function createTestUser() {
       console.log('✅ No organizations yet');
       console.log('');
       console.log('🌐 Local:  http://localhost:3000/login');
-      console.log('🌐 Vercel: https://stratifi-pi.vercel.app/login');
+      console.log('🌐 Vercel: https://stratiri-pi.vercel.app/login');
       console.log('');
       console.log('📝 After login → you\'ll go to /onboarding');
       console.log('📝 Create your first organization there!');

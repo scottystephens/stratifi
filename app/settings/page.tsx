@@ -190,7 +190,7 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  URL: stratifi.com/{currentTenant.slug}
+                  URL: strategicfinance.com/{currentTenant.slug}
                 </p>
               </div>
 

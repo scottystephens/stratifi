@@ -1,4 +1,4 @@
-# 🔐 Comprehensive Security Review - Stratifi
+# 🔐 Comprehensive Security Review - Stratiri
 
 **Date:** November 23, 2025  
 **Reviewer:** Security Audit  
@@ -221,7 +221,7 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: process.env.NEXT_PUBLIC_APP_URL || 'https://stratifi.vercel.app' },
+          { key: 'Access-Control-Allow-Origin', value: process.env.NEXT_PUBLIC_APP_URL || 'https://stratiri.vercel.app' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -726,7 +726,7 @@ updates:
 
 ## 🎓 CONCLUSION
 
-**Overall Assessment:** Stratifi has a **solid security foundation** with excellent multi-tenant isolation, strong encryption, and comprehensive test coverage. However, there are **critical gaps** in API security (rate limiting, CORS, CSRF) that must be addressed before scaling.
+**Overall Assessment:** Stratiri has a **solid security foundation** with excellent multi-tenant isolation, strong encryption, and comprehensive test coverage. However, there are **critical gaps** in API security (rate limiting, CORS, CSRF) that must be addressed before scaling.
 
 **Immediate Action Required:**
 1. Implement rate limiting (prevents DoS, reduces costs)

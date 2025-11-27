@@ -1,6 +1,6 @@
 # Operations
 
-This directory contains operational documentation, runbooks, and DevOps guides for managing Stratifi's infrastructure.
+This directory contains operational documentation, runbooks, and DevOps guides for managing Stratiri's infrastructure.
 
 ---
 
@@ -31,7 +31,7 @@ cd /Users/scottstephens/stratifi && npx supabase link --project-ref vnuithaqtpgb
 cd /Users/scottstephens/stratifi && vercel --prod
 
 # View logs
-cd /Users/scottstephens/stratifi && vercel logs stratifi.vercel.app --since 1h
+cd /Users/scottstephens/stratifi && vercel logs stratiri.vercel.app --since 1h
 
 # Pull environment variables
 cd /Users/scottstephens/stratifi && vercel env pull .env.local
@@ -61,7 +61,7 @@ cd /Users/scottstephens/stratifi && vercel env pull .env.local
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| **Production App** | https://stratifi.vercel.app | Live production instance |
+| **Production App** | https://stratiri.vercel.app | Live production instance |
 | **Supabase Dashboard** | https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik | Database & Auth management |
 | **Supabase SQL Editor** | https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik/sql/new | Run SQL queries |
 | **Vercel Dashboard** | https://vercel.com/dashboard | Deployment management |

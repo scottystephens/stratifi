@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-Stratifi now has a **fully generic banking provider architecture** that makes it incredibly easy to add new banks, fintech APIs, and open banking connections. You can now integrate with:
+Stratiri now has a **fully generic banking provider architecture** that makes it incredibly easy to add new banks, fintech APIs, and open banking connections. You can now integrate with:
 
 - **Bunq** (Netherlands) ✅ Implemented
 - **Plaid** (US/Canada) - Ready to implement
@@ -80,7 +80,7 @@ User Action
 ## 📁 File Structure
 
 ```
-stratifi/
+stratiri/
 ├── lib/banking-providers/
 │   ├── base-provider.ts          # Abstract interface (all providers implement this)
 │   ├── provider-registry.ts       # Central registry of all providers
@@ -131,7 +131,7 @@ OAuth/API tokens for ALL providers
 Accounts from ALL providers
 - `provider_id` - References banking_providers
 - `external_account_id` - Account ID in provider's system
-- `account_id` - Links to Stratifi accounts table
+- `account_id` - Links to Stratiri accounts table
 - `currency`, `balance`, `iban`, etc.
 - **Replaces bunq_accounts** (Bunq data auto-migrated)
 

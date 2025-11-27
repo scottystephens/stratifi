@@ -1,4 +1,4 @@
-# 🚀 Stratifi Production Deployment Guide
+# 🚀 Stratiri Production Deployment Guide
 
 ## Option 1: Vercel (RECOMMENDED - Easiest)
 
@@ -15,7 +15,7 @@ npm install -g vercel
 ### Step 2: Initialize Git (if not already)
 
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 
 # Initialize git
 git init
@@ -23,7 +23,7 @@ git init
 # Create .gitignore (already exists)
 # Add all files
 git add .
-git commit -m "Initial commit - Stratifi production ready"
+git commit -m "Initial commit - Stratiri production ready"
 ```
 
 ### Step 3: Deploy to Vercel
@@ -36,15 +36,15 @@ vercel login
 vercel
 
 # Questions you'll see:
-# ? Set up and deploy "~/stratifi"? [Y/n] Y
+# ? Set up and deploy "~/stratiri"? [Y/n] Y
 # ? Which scope? (Use arrow keys) → Select your account
 # ? Link to existing project? [y/N] N
-# ? What's your project's name? stratifi
+# ? What's your project's name? stratiri
 # ? In which directory is your code located? ./
 # ? Want to override the settings? [y/N] N
 ```
 
-**That's it!** Your app will be live at: `https://stratifi-xxxxx.vercel.app`
+**That's it!** Your app will be live at: `https://stratiri-xxxxx.vercel.app`
 
 ### Step 4: Add Custom Domain (Optional)
 
@@ -64,7 +64,7 @@ vercel domains add www.yourdomain.com
 # Deploy to production
 vercel --prod
 
-# Your production URL will be: https://stratifi.yourdomain.com
+# Your production URL will be: https://stratiri.yourdomain.com
 ```
 
 ---
@@ -113,7 +113,7 @@ For a production app, you need a real database instead of CSV files.
 Install PostgreSQL client:
 
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 npm install pg
 npm install @types/pg --save-dev
 ```
@@ -252,11 +252,11 @@ CREATE INDEX idx_forecasts_entity ON forecasts(entity_id);
 psql $DATABASE_URL
 
 # Then in psql:
-\copy entities FROM '/Users/scottstephens/stratifi/data/entities.csv' CSV HEADER
-\copy accounts FROM '/Users/scottstephens/stratifi/data/accounts.csv' CSV HEADER
-\copy transactions FROM '/Users/scottstephens/stratifi/data/transactions.csv' CSV HEADER
-\copy payments FROM '/Users/scottstephens/stratifi/data/payments.csv' CSV HEADER
-\copy forecasts FROM '/Users/scottstephens/stratifi/data/forecast.csv' CSV HEADER
+\copy entities FROM '/Users/scottstephens/stratiri/data/entities.csv' CSV HEADER
+\copy accounts FROM '/Users/scottstephens/stratiri/data/accounts.csv' CSV HEADER
+\copy transactions FROM '/Users/scottstephens/stratiri/data/transactions.csv' CSV HEADER
+\copy payments FROM '/Users/scottstephens/stratiri/data/payments.csv' CSV HEADER
+\copy forecasts FROM '/Users/scottstephens/stratiri/data/forecast.csv' CSV HEADER
 
 # Option B: Use Supabase dashboard
 # 1. Go to Table Editor
@@ -321,11 +321,11 @@ vercel --prod
 ### Step 1: Push to GitHub
 
 ```bash
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 
 # Create GitHub repo (go to github.com/new)
 # Then:
-git remote add origin https://github.com/yourusername/stratifi.git
+git remote add origin https://github.com/yourusername/stratiri.git
 git branch -M main
 git push -u origin main
 ```
@@ -336,7 +336,7 @@ git push -u origin main
 2. Click "Create App"
 3. Connect GitHub repository
 4. Configure:
-   - **Name**: stratifi
+   - **Name**: stratiri
    - **Region**: Choose closest to you
    - **Branch**: main
    - **Build Command**: `npm run build`
@@ -353,7 +353,7 @@ git push -u origin main
 ### Step 4: Deploy
 
 Click "Deploy" - takes 5-10 minutes
-Your app will be at: `https://stratifi-xxxxx.ondigitalocean.app`
+Your app will be at: `https://stratiri-xxxxx.ondigitalocean.app`
 
 ---
 
@@ -373,7 +373,7 @@ npm install -g @aws-amplify/cli
 amplify configure
 
 # Initialize
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 amplify init
 
 # Add hosting
@@ -412,8 +412,8 @@ sudo apt-get install -y nodejs
 sudo npm install -g pm2
 
 # Clone your repository
-git clone https://github.com/yourusername/stratifi.git
-cd stratifi
+git clone https://github.com/yourusername/stratiri.git
+cd stratiri
 
 # Install dependencies
 npm install
@@ -422,7 +422,7 @@ npm install
 npm run build
 
 # Start with PM2
-pm2 start npm --name "stratifi" -- start
+pm2 start npm --name "stratiri" -- start
 pm2 startup
 pm2 save
 
@@ -431,7 +431,7 @@ sudo apt update
 sudo apt install nginx
 
 # Configure Nginx
-sudo nano /etc/nginx/sites-available/stratifi
+sudo nano /etc/nginx/sites-available/stratiri
 ```
 
 **Nginx Configuration:**
@@ -456,7 +456,7 @@ server {
 
 ```bash
 # Enable site
-sudo ln -s /etc/nginx/sites-available/stratifi /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/stratiri /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 
@@ -470,7 +470,7 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 2. Create database (PostgreSQL)
 3. Choose db.t3.micro (free tier eligible)
 4. Configure:
-   - Database name: stratifi
+   - Database name: stratiri
    - Username: postgres
    - Password: (set secure password)
 5. Configure security group to allow EC2 access
@@ -479,14 +479,14 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 **Step 4: Configure Environment**
 ```bash
 # On EC2
-nano /home/ubuntu/stratifi/.env.production
+nano /home/ubuntu/stratiri/.env.production
 
 # Add:
-DATABASE_URL=postgresql://postgres:password@your-rds-endpoint:5432/stratifi
+DATABASE_URL=postgresql://postgres:password@your-rds-endpoint:5432/stratiri
 NODE_ENV=production
 
 # Restart app
-pm2 restart stratifi
+pm2 restart stratiri
 ```
 
 ---
@@ -521,8 +521,8 @@ const handler = NextAuth({
       async authorize(credentials) {
         // Add your logic here to validate credentials
         // Return user object if valid, null if not
-        if (credentials?.email === 'admin@stratifi.com' && credentials?.password === 'password') {
-          return { id: '1', name: 'Admin', email: 'admin@stratifi.com' }
+        if (credentials?.email === 'admin@stratiri.com' && credentials?.password === 'password') {
+          return { id: '1', name: 'Admin', email: 'admin@stratiri.com' }
         }
         return null
       }
@@ -643,7 +643,7 @@ Want me to walk you through the quickest option? Here's what I recommend:
 npm install -g vercel
 
 # 2. Navigate to project
-cd /Users/scottstephens/stratifi
+cd /Users/scottstephens/stratiri
 
 # 3. Deploy!
 vercel

@@ -13,6 +13,8 @@ import {
   getIpAddress
 } from '@/lib/security/rate-limit';
 
+export const maxDuration = 300; // Allow up to 5 minutes for sync (especially historical fetch)
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { provider: string } }
@@ -159,6 +161,8 @@ export async function POST(
         connectionId,
         tenantId,
         tokens,
+        // Include provider metadata (e.g., xeroTenantId for Xero)
+        metadata: tokenData.provider_metadata || {},
       };
 
       // ==========================================

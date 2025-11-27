@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stratifi's intelligent transaction sync system optimizes API calls to banking providers while ensuring complete and recent transaction data.
+Stratiri's intelligent transaction sync system optimizes API calls to banking providers while ensuring complete and recent transaction data.
 
 ## Goal
 

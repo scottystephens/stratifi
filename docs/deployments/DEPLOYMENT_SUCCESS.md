@@ -3,8 +3,8 @@
 ## ✅ Deployment Status: SUCCESS
 
 **Date**: November 15, 2025  
-**Production URL**: https://stratifi-pi.vercel.app  
-**Admin Dashboard**: https://stratifi-pi.vercel.app/admin
+**Production URL**: https://stratiri-pi.vercel.app  
+**Admin Dashboard**: https://stratiri-pi.vercel.app/admin
 
 ---
 
@@ -102,7 +102,7 @@ Due to Hobby plan limitations (max 2 cron jobs, daily only), we have:
 
 ## 🚀 How to Access
 
-1. **Go to**: https://stratifi-pi.vercel.app/login
+1. **Go to**: https://stratiri-pi.vercel.app/login
 2. **Login with**: test@treasuryx.com / test123456
 3. **Navigate to**: `/admin` or click "Admin Dashboard" in sidebar (amber button)
 4. **You should see**: The admin navigation with Shield icon
@@ -113,7 +113,7 @@ Due to Hobby plan limitations (max 2 cron jobs, daily only), we have:
 
 ### Setting Up Automated Syncs
 
-1. Go to https://stratifi-pi.vercel.app/admin/orchestration
+1. Go to https://stratiri-pi.vercel.app/admin/orchestration
 2. For each connection with a banking provider:
    - Select sync schedule from dropdown (Manual, Hourly, Daily, etc.)
    - Toggle the "Enabled" checkbox
@@ -189,7 +189,7 @@ Monitor provider API usage in the main dashboard and via `provider_api_usage` ta
 
 ### Immediate
 
-1. **Login and verify**: Test the admin dashboard at https://stratifi-pi.vercel.app/admin
+1. **Login and verify**: Test the admin dashboard at https://stratiri-pi.vercel.app/admin
 2. **Set up connections**: Configure sync schedules for any existing connections
 3. **Monitor health**: Check `/admin/health` for system status
 
@@ -215,7 +215,7 @@ Monitor provider API usage in the main dashboard and via `provider_api_usage` ta
 
 - Check Vercel Dashboard → Cron Jobs section
 - Verify CRON_SECRET is set: `vercel env ls production`
-- Check logs: `vercel logs stratifi-pi.vercel.app`
+- Check logs: `vercel logs stratiri-pi.vercel.app`
 
 ### Connection not syncing
 

@@ -125,7 +125,7 @@ const nextConfig = {
   output: 'standalone',
   
   async headers() {
-    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://stratifi.vercel.app';
+    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://stratiri.vercel.app';
     
     return [
       {
@@ -391,7 +391,7 @@ UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 
 # CORS
-NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
+NEXT_PUBLIC_APP_URL=https://stratiri.vercel.app
 ```
 
 ### Testing
@@ -598,22 +598,22 @@ After implementation, verify:
 
 ```bash
 # 1. Rate limiting works
-curl -i https://stratifi.vercel.app/api/accounts
+curl -i https://stratiri.vercel.app/api/accounts
 # Check for X-RateLimit-* headers
 
 # 2. CORS configured
-curl -H "Origin: https://evil.com" https://stratifi.vercel.app/api/accounts
+curl -H "Origin: https://evil.com" https://stratiri.vercel.app/api/accounts
 # Should return CORS error
 
 # 3. Security headers present
-curl -I https://stratifi.vercel.app
+curl -I https://stratiri.vercel.app
 # Check for CSP, X-Frame-Options, etc.
 
 # 4. Errors sanitized
 # Trigger error, check response has no stack trace
 
 # 5. CSRF required
-curl -X POST https://stratifi.vercel.app/api/accounts
+curl -X POST https://stratiri.vercel.app/api/accounts
 # Should return 403 without CSRF token
 ```
 

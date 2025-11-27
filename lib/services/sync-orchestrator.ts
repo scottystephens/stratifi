@@ -13,9 +13,14 @@ import { supabase } from '@/lib/supabase';
 import { BankingProvider } from '@/lib/banking-providers/base-provider';
 import { rawStorageService } from './raw-storage-service';
 import { normalizationService } from './normalization-service';
-import { batchCreateOrUpdateAccounts } from './account-service';
+import { batchCreateOrUpdateAccounts, syncHistoricalBalances } from './account-service';
 import { batchCreateOrUpdateTransactions } from './transaction-sync-service';
 import type { ConnectionCredentials } from '@/lib/banking-providers/raw-types';
+import {
+  startSyncTracking,
+  updateSyncMetrics,
+  completeSyncTracking,
+} from './xero-observability-service';
 
 export interface SyncOptions {
   provider: BankingProvider;
@@ -28,6 +33,7 @@ export interface SyncOptions {
   accountIds?: string[]; // Specific accounts to sync (optional)
   startDate?: string;    // For transaction sync
   endDate?: string;      // For transaction sync
+  modifiedSince?: string; // For incremental sync (webhook-triggered)
 }
 
 export interface SyncResult {
@@ -56,12 +62,24 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
     accountIds,
     startDate,
     endDate,
+    modifiedSince, // For incremental sync (webhook-triggered)
   } = options;
 
   const startTime = Date.now();
   const providerId = provider.config.providerId;
 
   console.log(`[SyncOrchestrator] Starting sync orchestration for ${providerId} (connection: ${connectionId})`);
+
+  // Start observability tracking for Xero
+  let syncId: string | null = null;
+  if (providerId === 'xero') {
+    try {
+      syncId = await startSyncTracking(connectionId, tenantId);
+      console.log(`[SyncOrchestrator] Started Xero sync tracking: ${syncId}`);
+    } catch (error) {
+      console.warn('[SyncOrchestrator] Failed to start sync tracking (non-blocking):', error);
+    }
+  }
 
   let accountsSynced = 0;
   let transactionsSynced = 0;
@@ -86,6 +104,13 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
 
         const rawAccountsResponse = await provider.fetchRawAccounts(credentials);
 
+        // Update observability metrics for Xero
+        if (providerId === 'xero' && syncId) {
+          await updateSyncMetrics(syncId, {
+            accountsFetched: rawAccountsResponse.accountCount,
+          });
+        }
+
         metadata.steps.push({
           step: 1,
           name: 'fetch_raw_accounts',
@@ -104,6 +129,9 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
         } else if (providerId === 'tink') {
           await rawStorageService.storeTinkAccounts(rawAccountsResponse);
           console.log(`[SyncOrchestrator] Stored raw Tink accounts successfully`);
+        } else if (providerId === 'xero') {
+          await rawStorageService.storeXeroAccounts(rawAccountsResponse);
+          console.log(`[SyncOrchestrator] Stored raw Xero accounts successfully`);
         } else {
           // Direct bank provider
           await rawStorageService.storeDirectBankAccounts(rawAccountsResponse, providerId);
@@ -124,6 +152,8 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
           normalizedAccounts = await normalizationService.normalizePlaidAccounts(connectionId, tenantId);
         } else if (providerId === 'tink') {
           normalizedAccounts = await normalizationService.normalizeTinkAccounts(connectionId, tenantId);
+        } else if (providerId === 'xero') {
+          normalizedAccounts = await normalizationService.normalizeXeroAccounts(connectionId, tenantId);
         } else {
           // Direct bank provider
           normalizedAccounts = await normalizationService.normalizeDirectBankAccounts(connectionId, providerId);
@@ -149,6 +179,14 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
 
         accountsSynced = batchResult.summary.total;
 
+        // Update observability metrics for Xero
+        if (providerId === 'xero' && syncId) {
+          await updateSyncMetrics(syncId, {
+            accountsCreated: batchResult.summary.created,
+            accountsUpdated: batchResult.summary.updated,
+          });
+        }
+
         metadata.steps.push({
           step: 4,
           name: 'save_accounts',
@@ -159,10 +197,31 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
 
         console.log(`[SyncOrchestrator] Accounts sync complete: ${accountsSynced} accounts`);
 
+        // 4.5 Sync Historical Balances (Specific to providers with historical balance support)
+        if (providerId === 'xero') {
+          console.log('[SyncOrchestrator] STEP 4.5: Syncing historical balances to statements...');
+          const balanceStart = Date.now();
+          const syncedStatements = await syncHistoricalBalances(tenantId, connectionId, providerId);
+          
+          metadata.steps.push({
+            step: 4.5,
+            name: 'sync_historical_balances',
+            duration: Date.now() - balanceStart,
+            statementsSynced: syncedStatements
+          });
+        }
+
       } catch (error) {
         const errorMsg = `Account sync failed: ${error instanceof Error ? error.message : String(error)}`;
         errors.push(errorMsg);
         console.error('[SyncOrchestrator] Account sync error:', error);
+        
+        // Update observability metrics for Xero
+        if (providerId === 'xero' && syncId) {
+          await updateSyncMetrics(syncId, {
+            errors: [errorMsg],
+          });
+        }
       }
     }
 
@@ -201,11 +260,18 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
                 startDate,
                 endDate,
                 cursor, // Pass cursor for incremental sync
-                // Add pagination support here if needed
+                modifiedSince, // For incremental sync (webhook-triggered)
               }
             );
 
             totalTransactionsFetched += rawTxResponse.transactionCount;
+
+            // Update observability metrics for Xero
+            if (providerId === 'xero' && syncId) {
+              await updateSyncMetrics(syncId, {
+                transactionsFetched: totalTransactionsFetched,
+              });
+            }
 
             // Store raw transaction data based on provider
             console.log(`[SyncOrchestrator] Storing ${rawTxResponse.transactionCount} raw transactions for account ${accountId}...`);
@@ -215,6 +281,9 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
             } else if (providerId === 'tink') {
               await rawStorageService.storeTinkTransactions(rawTxResponse);
               console.log(`[SyncOrchestrator] Stored raw Tink transactions successfully`);
+            } else if (providerId === 'xero') {
+              await rawStorageService.storeXeroTransactions(rawTxResponse);
+              console.log(`[SyncOrchestrator] Stored raw Xero transactions successfully`);
             } else {
               // Direct bank provider
               await rawStorageService.storeDirectBankTransactions(rawTxResponse, providerId);
@@ -244,6 +313,8 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
           normalizedTxs = await normalizationService.normalizePlaidTransactions(connectionId);
         } else if (providerId === 'tink') {
           normalizedTxs = await normalizationService.normalizeTinkTransactions(connectionId);
+        } else if (providerId === 'xero') {
+          normalizedTxs = await normalizationService.normalizeXeroTransactions(connectionId);
         } else {
           // Direct bank provider
           normalizedTxs = await normalizationService.normalizeDirectBankTransactions(connectionId, providerId);
@@ -279,6 +350,14 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
         console.log(`[SyncOrchestrator] Batch result:`, txBatchResult);
         transactionsSynced = txBatchResult.summary.total;
 
+        // Update observability metrics for Xero
+        if (providerId === 'xero' && syncId) {
+          await updateSyncMetrics(syncId, {
+            transactionsCreated: txBatchResult.summary.created,
+            transactionsUpdated: txBatchResult.summary.updated,
+          });
+        }
+
         metadata.steps.push({
           step: 7,
           name: 'save_transactions',
@@ -293,6 +372,13 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
         const errorMsg = `Transaction sync failed: ${error instanceof Error ? error.message : String(error)}`;
         errors.push(errorMsg);
         console.error('[SyncOrchestrator] Transaction sync error:', error);
+        
+        // Update observability metrics for Xero
+        if (providerId === 'xero' && syncId) {
+          await updateSyncMetrics(syncId, {
+            errors: errors,
+          });
+        }
       }
     }
 
@@ -340,6 +426,19 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
 
     const totalDuration = Date.now() - startTime;
 
+    // Complete observability tracking for Xero
+    if (providerId === 'xero' && syncId) {
+      const finalStatus: 'completed' | 'failed' | 'partial' = 
+        errors.length === 0 ? 'completed' : 
+        errors.length < (accountsSynced + transactionsSynced) ? 'partial' : 'failed';
+      
+      await completeSyncTracking(syncId, finalStatus, {
+        accountsFetched: accountsSynced,
+        transactionsFetched: transactionsSynced,
+        errors: errors,
+      });
+    }
+
     console.log(`[SyncOrchestrator] Sync orchestration complete for ${providerId}!`);
     console.log(`[SyncOrchestrator] Duration: ${totalDuration}ms`);
     console.log(`[SyncOrchestrator] Accounts: ${accountsSynced}, Transactions: ${transactionsSynced}`);
@@ -363,6 +462,13 @@ export async function orchestrateSync(options: SyncOptions): Promise<SyncResult>
     const errorMsg = `Fatal sync error: ${fatalError instanceof Error ? fatalError.message : String(fatalError)}`;
 
     console.error('[SyncOrchestrator] Fatal error:', fatalError);
+
+    // Complete observability tracking for Xero (failed status)
+    if (providerId === 'xero' && syncId) {
+      await completeSyncTracking(syncId, 'failed', {
+        errors: [errorMsg],
+      });
+    }
 
     // Update connection with failure status
     try {

@@ -21,14 +21,30 @@ export async function GET(
     }
 
     const accountIdentifier = params.id;
-    const { data: account, error: accountError } = await supabase
+    
+    // Try by UUID id first, then by account_id (TEXT)
+    let account = null;
+    
+    const { data: byId } = await supabase
       .from('accounts')
       .select('id, account_id, tenant_id')
       .eq('tenant_id', tenantId)
-      .or(`account_id.eq.${accountIdentifier},id.eq.${accountIdentifier}`)
-      .single();
+      .eq('id', accountIdentifier)
+      .maybeSingle();
+    
+    if (byId) {
+      account = byId;
+    } else {
+      const { data: byAccountId } = await supabase
+        .from('accounts')
+        .select('id, account_id, tenant_id')
+        .eq('tenant_id', tenantId)
+        .eq('account_id', accountIdentifier)
+        .maybeSingle();
+      account = byAccountId;
+    }
 
-    if (accountError || !account) {
+    if (!account) {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
 
@@ -77,14 +93,30 @@ export async function POST(
     }
 
     const accountIdentifier = params.id;
-    const { data: account, error: accountError } = await supabase
+    
+    // Try by UUID id first, then by account_id (TEXT)
+    let account = null;
+    
+    const { data: byId } = await supabase
       .from('accounts')
       .select('id, account_id, tenant_id, currency')
       .eq('tenant_id', tenantId)
-      .or(`account_id.eq.${accountIdentifier},id.eq.${accountIdentifier}`)
-      .single();
+      .eq('id', accountIdentifier)
+      .maybeSingle();
+    
+    if (byId) {
+      account = byId;
+    } else {
+      const { data: byAccountId } = await supabase
+        .from('accounts')
+        .select('id, account_id, tenant_id, currency')
+        .eq('tenant_id', tenantId)
+        .eq('account_id', accountIdentifier)
+        .maybeSingle();
+      account = byAccountId;
+    }
 
-    if (accountError || !account) {
+    if (!account) {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
 

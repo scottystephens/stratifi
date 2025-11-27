@@ -263,7 +263,7 @@ edges.push({
 ## 🚀 Deployment
 
 **Status:** ✅ Deployed to Production  
-**URL:** https://stratifi-pi.vercel.app  
+**URL:** https://stratiri-pi.vercel.app  
 **Build:** Successful  
 **Errors:** None
 
@@ -276,15 +276,15 @@ edges.push({
 **Entity diagram connector lines are now clearly visible!**
 
 ### **Test These Pages:**
-1. https://stratifi-pi.vercel.app/dashboard (reference)
-2. https://stratifi-pi.vercel.app/entities
-3. https://stratifi-pi.vercel.app/accounts
-4. https://stratifi-pi.vercel.app/connections
-5. https://stratifi-pi.vercel.app/entities (click "Diagram" - lines should be visible!)
+1. https://stratiri-pi.vercel.app/dashboard (reference)
+2. https://stratiri-pi.vercel.app/entities
+3. https://stratiri-pi.vercel.app/accounts
+4. https://stratiri-pi.vercel.app/connections
+5. https://stratiri-pi.vercel.app/entities (click "Diagram" - lines should be visible!)
 
 ---
 
 *Deployed: November 16, 2024*  
-*Production URL: https://stratifi-pi.vercel.app*  
+*Production URL: https://stratiri-pi.vercel.app*  
 *Status: ✅ Production Ready*
 

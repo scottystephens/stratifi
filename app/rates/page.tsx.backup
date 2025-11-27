@@ -1,0 +1,580 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import {
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  X,
+  Calendar,
+  ArrowRightLeft,
+  Search,
+  Check,
+  GripVertical
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from 'recharts'
+import { cn } from '@/lib/utils'
+
+// Types
+type RateType = 'spot' | 'eom' | 'avg'
+type TimeRange = '7D' | '30D' | '90D' | 'custom'
+type CurrencyPair = { from: string; to: string }
+
+// Mock Data Constants
+const CURRENCIES = [
+  { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
+  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+  { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
+  { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵' },
+  { code: 'CHF', name: 'Swiss Franc', flag: '🇨🇭' },
+  { code: 'CAD', name: 'Canadian Dollar', flag: '🇨🇦' },
+  { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺' },
+  { code: 'NZD', name: 'New Zealand Dollar', flag: '🇳🇿' },
+  { code: 'SGD', name: 'Singapore Dollar', flag: '🇸🇬' },
+  { code: 'HKD', name: 'Hong Kong Dollar', flag: '🇭🇰' },
+]
+
+// Mock Data Generator (Deterministic for SSR safety if we pass a seed, but here we use useEffect)
+const generateHistory = (from: string, to: string, days: number, type: RateType) => {
+  const data = []
+  // Base rate simulation
+  let baseRate = 1.0
+  if (from === 'EUR' && to === 'USD') baseRate = 1.08
+  if (from === 'GBP' && to === 'USD') baseRate = 1.27
+  if (from === 'USD' && to === 'JPY') baseRate = 149.50
+  
+  // Random walk with fixed seed-like behavior for stability within session
+  // We'll use a simple seeded random based on date index to prevent hydration mismatch
+  // if we were rendering on server, but we'll use client-side rendering for safety.
+  let currentRate = baseRate
+  const today = new Date() 
+  // Normalize today to avoid seconds/milliseconds diffs between server/client
+  today.setHours(0,0,0,0)
+
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    
+    // Pseudo-random based on pair + date to be deterministic
+    const seed = (from.charCodeAt(0) + to.charCodeAt(0) + i) * 123.45
+    const randomVal = (Math.sin(seed) + 1) / 2 // 0-1
+    
+    const volatility = 0.02
+    currentRate = currentRate * (1 + (randomVal - 0.5) * volatility)
+    
+    // Adjust based on type (simulated)
+    let displayRate = currentRate
+    if (type === 'avg') displayRate = currentRate * 0.99 // Smoother
+    if (type === 'eom') displayRate = currentRate // Just sampling points essentially
+
+    data.push({
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      rate: displayRate,
+      change: (randomVal - 0.5) * 2
+    })
+  }
+  return data
+}
+
+export default function RatesPage() {
+  // State
+  const [mounted, setMounted] = useState(false)
+  const [watchlist, setWatchlist] = useState<CurrencyPair[]>([
+    { from: 'EUR', to: 'USD' },
+    { from: 'GBP', to: 'USD' },
+    { from: 'USD', to: 'JPY' },
+    { from: 'AUD', to: 'USD' }
+  ])
+  const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>(['USD', 'EUR', 'GBP', 'JPY'])
+  const [rateType, setRateType] = useState<RateType>('spot')
+  const [timeRange, setTimeRange] = useState<TimeRange>('30D')
+  const [showAddPair, setShowAddPair] = useState(false)
+  const [newPair, setNewPair] = useState<CurrencyPair>({ from: 'USD', to: 'EUR' })
+  const [customDateFrom, setCustomDateFrom] = useState('')
+  const [customDateTo, setCustomDateTo] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [insertionIndex, setInsertionIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Derived
+  const daysMap = { '7D': 7, '30D': 30, '90D': 90, 'custom': 60 }
+  const currentDays = daysMap[timeRange]
+
+  const handleAddPair = () => {
+    if (!watchlist.some(p => p.from === newPair.from && p.to === newPair.to)) {
+      setWatchlist([...watchlist, newPair])
+    }
+    setShowAddPair(false)
+  }
+
+  const handleRemovePair = (index: number) => {
+    const newList = [...watchlist]
+    newList.splice(index, 1)
+    setWatchlist(newList)
+  }
+
+  const toggleCurrency = (code: string) => {
+    if (selectedCurrencies.includes(code)) {
+      setSelectedCurrencies(selectedCurrencies.filter(c => c !== code))
+    } else {
+      setSelectedCurrencies([...selectedCurrencies, code])
+    }
+  }
+
+  const swapPair = (index: number) => {
+    const newWatchlist = [...watchlist]
+    const [from, to] = [newWatchlist[index].to, newWatchlist[index].from]
+    newWatchlist[index] = { from, to }
+    setWatchlist(newWatchlist)
+  }
+
+  // Drag and drop handlers - Insertion-based
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+
+    // Determine insertion point based on mouse position within the card
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const midpoint = rect.left + rect.width / 2
+    const insertBefore = e.clientX < midpoint
+
+    // Set insertion index
+    setInsertionIndex(insertBefore ? index : index + 1)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear insertion if we're actually leaving the card area
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const isLeavingCard = e.clientX < rect.left || e.clientX > rect.right ||
+                         e.clientY < rect.top || e.clientY > rect.bottom
+
+    if (isLeavingCard) {
+      setInsertionIndex(null)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (draggedIndex === null || insertionIndex === null) {
+      setDraggedIndex(null)
+      setInsertionIndex(null)
+      return
+    }
+
+    const newWatchlist = [...watchlist]
+    const draggedItem = newWatchlist[draggedIndex]
+    newWatchlist.splice(draggedIndex, 1)
+
+    // Insert at the insertion point, accounting for the removed item
+    let adjustedInsertionIndex = insertionIndex
+    if (insertionIndex > draggedIndex) {
+      adjustedInsertionIndex -= 1
+    }
+
+    newWatchlist.splice(adjustedInsertionIndex, 0, draggedItem)
+
+    setWatchlist(newWatchlist)
+    setDraggedIndex(null)
+    setInsertionIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setInsertionIndex(null)
+  }
+
+  // Prevent hydration mismatch by only rendering content on client
+  if (!mounted) return <div className="p-8">Loading rates...</div>
+
+  return (
+    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      {/* Header & Controls */}
+      <div className="flex flex-col gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-stone-900">Exchange Rates</h1>
+            <p className="text-stone-500 mt-1">
+              Global currency trends and historical data analysis
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+              <Button onClick={() => setShowAddPair(true)} size="sm" className="bg-stratifi-700 hover:bg-stratifi-800 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Pair
+            </Button>
+          </div>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
+
+          {/* Left: Rate Type & Range */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center rounded-lg border border-stone-200 bg-stone-50 p-1">
+              {(['spot', 'eom', 'avg'] as RateType[]).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setRateType(type)}
+                  className={cn(
+                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize",
+                    rateType === type
+                      ? "bg-white text-stone-900 shadow-sm"
+                      : "text-stone-500 hover:text-stone-900"
+                  )}
+                >
+                  {type === 'eom' ? 'End of Month' : type === 'avg' ? 'Monthly Avg' : 'Spot Rate'}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-6 w-px bg-stone-200 mx-1 hidden sm:block" />
+
+            <div className="flex items-center rounded-lg border border-stone-200 bg-stone-50 p-1">
+              {(['7D', '30D', '90D'] as TimeRange[]).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={cn(
+                    "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                    timeRange === range
+                      ? "bg-white text-stone-900 shadow-sm"
+                      : "text-stone-500 hover:text-stone-900"
+                  )}
+                >
+                  {range}
+                </button>
+              ))}
+              <button
+                onClick={() => setTimeRange('custom')}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2",
+                  timeRange === 'custom'
+                    ? "bg-white text-stone-900 shadow-sm"
+                    : "text-stone-500 hover:text-stone-900"
+                )}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Custom
+              </button>
+            </div>
+
+            {timeRange === 'custom' && (
+              <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                <input
+                  type="date"
+                  className="h-9 rounded-md border border-stone-200 px-3 text-sm"
+                  value={customDateFrom}
+                  onChange={(e) => setCustomDateFrom(e.target.value)}
+                />
+                <span className="text-stone-400">-</span>
+                <input
+                  type="date"
+                  className="h-9 rounded-md border border-stone-200 px-3 text-sm"
+                  value={customDateTo}
+                  onChange={(e) => setCustomDateTo(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+              {/* Right: Currency Filter Toggle */}
+              <div className="flex items-center gap-3">
+                 <div className="text-right">
+                    <div className="text-sm font-medium text-stone-900">Organization Currencies</div>
+                    <div className="text-xs text-stone-500">Select currencies your organization transacts in</div>
+                 </div>
+                 <div className="flex -space-x-2">
+                    {selectedCurrencies.slice(0, 4).map(code => {
+                      const c = CURRENCIES.find(curr => curr.code === code)
+                      return (
+                        <div key={code} className="w-8 h-8 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center text-xs" title={c?.name}>
+                          {c?.flag}
+                        </div>
+                      )
+                    })}
+                    {selectedCurrencies.length > 4 && (
+                      <div className="w-8 h-8 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center text-xs font-medium text-stone-600">
+                        +{selectedCurrencies.length - 4}
+                      </div>
+                    )}
+                 </div>
+                 <Button variant="outline" size="sm">
+                    Manage
+                 </Button>
+              </div>
+        </div>
+      </div>
+
+      {/* Add Pair Modal/Popover (Inline for now) */}
+      {showAddPair && (
+        <div className="mb-6 bg-white p-4 rounded-xl border border-stone-200 shadow-sm animate-in zoom-in-95">
+          <div className="flex items-end gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-500">From Currency</label>
+              <select
+                className="h-9 w-full rounded-md border border-stone-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-stratifi-700"
+                value={newPair.from}
+                onChange={(e) => setNewPair({...newPair, from: e.target.value})}
+              >
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+              </select>
+            </div>
+
+            <div className="pb-2 text-stone-400">
+              <ArrowRightLeft className="h-4 w-4" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-500">To Currency</label>
+              <select
+                className="h-9 w-full rounded-md border border-stone-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-stratifi-700"
+                value={newPair.to}
+                onChange={(e) => setNewPair({...newPair, to: e.target.value})}
+              >
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+              </select>
+            </div>
+
+            <div className="flex gap-2 pb-0.5">
+              <Button onClick={handleAddPair} size="sm" className="bg-stratifi-700 text-white hover:bg-stratifi-800">
+                Add Pair
+              </Button>
+              <Button onClick={() => setShowAddPair(false)} size="sm" variant="ghost">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Watchlist Grid with Insertion Points */}
+      <div className="relative">
+        <div className="space-y-4">
+          {/* Insertion indicator before first card */}
+          {insertionIndex === 0 && draggedIndex !== null && (
+            <div className="flex justify-center py-2">
+              <div className="w-full max-w-md h-3 bg-gradient-to-r from-stratifi-500 to-stratifi-600 rounded-full shadow-lg animate-pulse flex items-center justify-center">
+                <div className="bg-white text-stratifi-700 px-4 py-2 rounded-full text-sm font-medium shadow-md border-2 border-stratifi-200">
+                  🎯 Drop here (first position)
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {watchlist.map((pair, idx) => {
+              const isDragged = draggedIndex === idx
+
+              return (
+                <React.Fragment key={`${pair.from}-${pair.to}-${idx}`}>
+                  {/* Insertion indicator before this card */}
+                  {insertionIndex === idx && draggedIndex !== null && (
+                    <div className="col-span-full flex justify-center py-2">
+                      <div className="w-full max-w-md h-3 bg-gradient-to-r from-stratifi-500 to-stratifi-600 rounded-full shadow-lg animate-pulse flex items-center justify-center">
+                        <div className="bg-white text-stratifi-700 px-4 py-2 rounded-full text-sm font-medium shadow-md border-2 border-stratifi-200">
+                          🎯 Drop here (before {pair.from}/{pair.to})
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* The card */}
+          const data = generateHistory(pair.from, pair.to, currentDays, rateType)
+          const latest = data[data.length - 1]
+          const start = data[0]
+          const change = ((latest.rate - start.rate) / start.rate) * 100
+          const isPositive = change >= 0
+          const fromCurr = CURRENCIES.find(c => c.code === pair.from)
+          const toCurr = CURRENCIES.find(c => c.code === pair.to)
+
+          return (
+            <div
+              key={`${pair.from}-${pair.to}-${idx}`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+              className={cn(
+                "bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all duration-200 group cursor-move relative",
+                isDragged && "opacity-50 scale-95 shadow-2xl rotate-3 z-50"
+              )}
+            >
+              {isDragged && (
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border-2 border-blue-300 z-10"></div>
+              )}
+              <div className="p-5">
+                {/* Card Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                        <span className="text-2xl z-10">{fromCurr?.flag}</span>
+                        <span className="text-2xl transform translate-x-1">{toCurr?.flag}</span>
+                    </div>
+                    <div className="ml-2">
+                      <h3 className="font-bold text-stone-900">
+                        {pair.from} / {pair.to}
+                      </h3>
+                      <p className="text-xs text-stone-500">{fromCurr?.name} to {toCurr?.name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 text-stone-400 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <GripVertical className="h-4 w-4" />
+                    </div>
+
+                    <button
+                      onClick={() => handleRemovePair(idx)}
+                      className="p-2 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => swapPair(idx)}
+                      className="p-2 rounded-lg bg-stratifi-700 hover:bg-stratifi-800 text-white transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                      title={`Swap to ${pair.to}/${pair.from}`}
+                    >
+                      <ArrowRightLeft className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rate & Chart Row */}
+                <div className="flex items-end justify-between gap-4 h-[120px]">
+                  <div className="pb-1">
+                    <div className="text-3xl font-bold font-mono tracking-tight text-stone-900">
+                      {latest.rate.toFixed(4)}
+                    </div>
+                    <div className={cn(
+                      "flex items-center gap-1 text-sm font-medium mt-1",
+                      isPositive ? "text-green-600" : "text-red-600"
+                    )}>
+                      {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                      <span>{Math.abs(change).toFixed(2)}%</span>
+                      <span className="text-stone-400 font-normal ml-1">({timeRange})</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 h-full min-w-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={data}>
+                        <defs>
+                          <linearGradient id={`grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={isPositive ? '#16a34a' : '#dc2626'} stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor={isPositive ? '#16a34a' : '#dc2626'} stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <Area
+                          type="monotone"
+                          dataKey="rate"
+                          stroke={isPositive ? '#16a34a' : '#dc2626'}
+                          strokeWidth={2}
+                          fill={`url(#grad-${idx})`}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Footer Stats */}
+                <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-3 gap-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Low</p>
+                    <p className="text-sm font-medium text-stone-700">
+                      {Math.min(...data.map(d => d.rate)).toFixed(4)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">High</p>
+                    <p className="text-sm font-medium text-stone-700">
+                      {Math.max(...data.map(d => d.rate)).toFixed(4)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Avg</p>
+                    <p className="text-sm font-medium text-stone-700">
+                      {(data.reduce((a, b) => a + b.rate, 0) / data.length).toFixed(4)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+                  )
+
+                  {/* Insertion indicator after this card */}
+                  {insertionIndex === idx + 1 && draggedIndex !== null && (
+                    <div className="col-span-full flex justify-center py-2">
+                      <div className="w-full max-w-md h-3 bg-gradient-to-r from-stratifi-500 to-stratifi-600 rounded-full shadow-lg animate-pulse flex items-center justify-center">
+                        <div className="bg-white text-stratifi-700 px-4 py-2 rounded-full text-sm font-medium shadow-md border-2 border-stratifi-200">
+                          🎯 Drop here (after {pair.from}/{pair.to})
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </div>
+        </div>
+
+      {/* Individual Currencies Section */}
+      <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-stone-200 flex justify-between items-center">
+            <h2 className="font-bold text-lg text-stone-900">Supported Currencies</h2>
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Search currency..."
+                  className="pl-9 pr-4 py-2 text-sm border border-stone-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-stratifi-700/20"
+                />
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {CURRENCIES.map(curr => (
+                  <button
+                    key={curr.code}
+                    onClick={() => toggleCurrency(curr.code)}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                      selectedCurrencies.includes(curr.code)
+                        ? "border-stratifi-700 bg-stratifi-50 ring-1 ring-stratifi-700"
+                        : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                    )}
+                  >
+                      <span className="text-2xl">{curr.flag}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-stone-900">{curr.code}</div>
+                        <div className="text-xs text-stone-500 truncate">{curr.name}</div>
+                      </div>
+                      {selectedCurrencies.includes(curr.code) && (
+                        <Check className="h-4 w-4 text-stratifi-700" />
+                      )}
+                  </button>
+                ))}
+            </div>
+          </div>
+      </div>
+      
+    </div>
+  )
+}

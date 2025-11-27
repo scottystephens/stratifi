@@ -74,7 +74,7 @@ Created Migration 31 with three dedicated tables:
   - Balances: booked, available, currency
   - Status: closed flag, account flags
 - `raw_data JSONB` - Full API response
-- Links to normalized accounts via `stratifi_account_id`
+- Links to normalized accounts via `stratiri_account_id`
 
 **Features Added:**
 - ✅ 21 performance indexes
@@ -608,7 +608,7 @@ WHERE connection_id = 'YOUR_CONNECTION_ID';
 3. Manually run import: `importTinkTransactionsToMain()`
 4. Verify link to accounts exists:
    ```sql
-   SELECT * FROM tink_accounts WHERE stratifi_account_id IS NULL;
+   SELECT * FROM tink_accounts WHERE stratiri_account_id IS NULL;
    ```
 
 ---
@@ -737,8 +737,8 @@ WHERE connection_id = 'YOUR_CONNECTION_ID';
 - SQL Editor: https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik/sql/new
 
 **Application:**
-- Production: https://stratifi.vercel.app
-- Connections: https://stratifi.vercel.app/connections
+- Production: https://stratiri.vercel.app
+- Connections: https://stratiri.vercel.app/connections
 
 ---
 

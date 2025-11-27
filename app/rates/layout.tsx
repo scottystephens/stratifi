@@ -1,7 +1,7 @@
 import { Navigation } from '@/components/navigation'
 
 export const metadata = {
-  title: 'Exchange Rates - Stratifi',
+  title: 'Exchange Rates - Strategic Finance',
   description: 'Real-time USD to major currency exchange rates updated daily',
 }
 

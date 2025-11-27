@@ -1,10 +1,10 @@
 ##Adding New Banking Providers
 
-Complete guide for adding new banking integrations to Stratifi's generic provider system.
+Complete guide for adding new banking integrations to Stratiri's generic provider system.
 
 ## Overview
 
-Stratifi uses a generic banking provider architecture that makes it easy to add new banks, fintech APIs, and open banking connections. Each provider implements a standard interface, allowing the same code to work with multiple banking APIs.
+Stratiri uses a generic banking provider architecture that makes it easy to add new banks, fintech APIs, and open banking connections. Each provider implements a standard interface, allowing the same code to work with multiple banking APIs.
 
 ## Architecture
 

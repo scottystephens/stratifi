@@ -22,7 +22,7 @@ async function setupTestUserOrg() {
     });
     
     const usersData = await usersResponse.json();
-    const testUser = usersData.users?.find((u: any) => u.email === 'test@stratifi.com');
+    const testUser = usersData.users?.find((u: any) => u.email === 'test@stratiri.com');
     
     if (!testUser) {
       console.error('❌ Test user not found!');
@@ -129,7 +129,7 @@ async function setupTestUserOrg() {
     console.log('═══════════════════════════════════════════════════════════');
     console.log('');
     console.log('Login Credentials:');
-    console.log('  Email:    test@stratifi.com');
+    console.log('  Email:    test@stratiri.com');
     console.log('  Password: test123456');
     console.log('');
     console.log('Organization:');
@@ -137,7 +137,7 @@ async function setupTestUserOrg() {
     console.log(`  Role: owner`);
     console.log('');
     console.log('🌐 Login at: http://localhost:3000/login');
-    console.log('   Or: https://stratifi-pi.vercel.app/login');
+    console.log('   Or: https://stratiri-pi.vercel.app/login');
     console.log('');
     console.log('After login, you should see "Test Organization" selected');
     console.log('in the sidebar and be able to access /connections');

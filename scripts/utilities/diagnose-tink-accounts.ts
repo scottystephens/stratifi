@@ -77,7 +77,7 @@ async function diagnoseAccounts() {
     console.log('   ❌ No provider accounts found - you need to sync your Tink connection');
     console.log('   → Go to /connections, click on Tink Connection, and click "Sync Now"\n');
   } else if (providerAccounts && providerAccounts.some(pa => !pa.account_id)) {
-    console.log('   ⚠️  Provider accounts exist but are not linked to Stratifi accounts');
+    console.log('   ⚠️  Provider accounts exist but are not linked to Stratiri accounts');
     console.log('   → Need to either:');
     console.log('      a) Delete manual accounts and re-sync Tink (they will be auto-created)');
     console.log('      b) Manually link provider accounts to existing accounts\n');

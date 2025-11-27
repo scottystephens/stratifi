@@ -42,7 +42,7 @@ npx tsx scripts/utilities/run-migration-cli.ts scripts/migrations/XX-name.sql
 Scripts to create test data for development.
 
 ### User & Organization Setup
-- **create-test-user.ts** - Create test user (test@stratifi.com)
+- **create-test-user.ts** - Create test user (test@stratiri.com)
 - **setup-test-user-org.ts** - Create organization for test user
 - **create-test-accounts-v2.ts** - Create 4 test bank accounts
 

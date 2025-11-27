@@ -4,6 +4,7 @@
 import { BankingProvider, ProviderMetadata } from './base-provider';
 import { tinkProvider } from './tink-provider';
 import { plaidProvider } from './plaid-provider';
+import { xeroProvider } from './xero-provider';
 
 /**
  * Registry of all available banking providers
@@ -32,6 +33,14 @@ class ProviderRegistry {
       factory: () => plaidProvider,
       enabled: true,
       requiredEnvVars: ['PLAID_CLIENT_ID', 'PLAID_SECRET'],
+    });
+
+    this.registerProvider({
+      providerId: 'xero',
+      displayName: 'Xero',
+      factory: () => xeroProvider,
+      enabled: true,
+      requiredEnvVars: ['XERO_CLIENT_ID', 'XERO_CLIENT_SECRET', 'XERO_REDIRECT_URI'],
     });
 
     // Add more providers here as you build them

@@ -94,7 +94,7 @@ export const directBankProviders: DirectBankProviderConfig[] = [
         required: false,
         placeholder: 'Subscription key for Payment Initiation API',
         helperText:
-          'Only required if you plan to initiate payments through Stratifi. Leave blank for read-only access.',
+          'Only required if you plan to initiate payments through Stratiri. Leave blank for read-only access.',
       },
       {
         key: 'businessUnitId',
@@ -110,7 +110,7 @@ export const directBankProviders: DirectBankProviderConfig[] = [
       { value: 'production', label: 'Production' },
     ],
     instructions:
-      'Credentials stay encrypted at rest (AES-256-GCM) and never leave Stratifi’s secure vault.',
+      'Credentials stay encrypted at rest (AES-256-GCM) and never leave Stratiri’s secure vault.',
   },
 ];
 

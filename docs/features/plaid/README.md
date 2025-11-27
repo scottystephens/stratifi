@@ -49,7 +49,7 @@ Banking aggregation provider integration for US, Canadian, and European banks.
 ## 🔐 Authentication Flow
 
 ```
-User → Stratifi → Plaid Link (modal)
+User → Stratiri → Plaid Link (modal)
                        ↓
                  User selects bank & logs in
                        ↓

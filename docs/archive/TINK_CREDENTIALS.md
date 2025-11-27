@@ -6,7 +6,7 @@
 
 - **Client ID:** `caceafe5840c485f98f3c33d92a236ac`
 - **Client Secret:** `1f98b5876bb04c11adeeff36da43eb78`
-- **Redirect URI:** `https://stratifi-pi.vercel.app/api/banking/tink/callback`
+- **Redirect URI:** `https://stratiri-pi.vercel.app/api/banking/tink/callback`
 
 ## Local Development
 
@@ -28,14 +28,14 @@ TINK_REDIRECT_URI=http://localhost:3000/api/banking/tink/callback
 **IMPORTANT:** The redirect URI in Tink Console must match exactly:
 
 ```
-https://stratifi-pi.vercel.app/api/banking/tink/callback
+https://stratiri-pi.vercel.app/api/banking/tink/callback
 ```
 
 **Common mistakes to avoid:**
-- ❌ `https://stratifi-pi.vercel.app/connections` (wrong path)
-- ❌ `https://stratifi-pi.vercel.app/api/banking/tink/callback/` (trailing slash)
-- ❌ `http://stratifi-pi.vercel.app/api/banking/tink/callback` (http instead of https)
-- ✅ `https://stratifi-pi.vercel.app/api/banking/tink/callback` (correct)
+- ❌ `https://stratiri-pi.vercel.app/connections` (wrong path)
+- ❌ `https://stratiri-pi.vercel.app/api/banking/tink/callback/` (trailing slash)
+- ❌ `http://stratiri-pi.vercel.app/api/banking/tink/callback` (http instead of https)
+- ✅ `https://stratiri-pi.vercel.app/api/banking/tink/callback` (correct)
 
 ## OAuth Flow
 

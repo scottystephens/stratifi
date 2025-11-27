@@ -1,19 +1,21 @@
-# Stratifi
+# Stratiri
 
 ## Strategic Financial Intelligence Platform
 
 A modern, production-ready **multi-tenant SaaS platform** for intelligent treasury management, bank account operations, and automated data ingestion.
 
-[![Production](https://img.shields.io/badge/production-live-blue)](https://stratifi.vercel.app)
+[![Production](https://img.shields.io/badge/production-live-blue)](https://stratiri.vercel.app)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+
+> **AI Assistants:** Please read [AI_CONTEXT.md](./AI_CONTEXT.md) for architectural context and development rules.
 
 ---
 
 ## 🎯 Overview
 
-Stratifi is a comprehensive **Strategic Financial Intelligence** platform built for **multi-tenant SaaS** operations with:
+Stratiri is a comprehensive **Strategic Financial Intelligence** platform built for **multi-tenant SaaS** operations with:
 
 - ✅ **Multi-tenant architecture** with row-level security
 - ✅ **Bank account management** with 30+ industry-standard fields
@@ -27,7 +29,7 @@ Stratifi is a comprehensive **Strategic Financial Intelligence** platform built 
 
 ## 🚀 Live Demo
 
-**Production**: https://stratifi.vercel.app
+**Production**: https://stratiri.vercel.app
 
 **Test Credentials:**
 ```
@@ -305,7 +307,7 @@ Automatically deploys to Vercel from `main` branch:
 git push origin main
 ```
 
-Vercel: https://stratifi.vercel.app
+Vercel: https://stratiri.vercel.app
 
 ### Environment Variables (Vercel)
 Set in Vercel dashboard:
@@ -365,9 +367,9 @@ MIT License - see LICENSE file for details
 
 ## 🔗 Links
 
-- **Production App**: https://stratifi.vercel.app
+- **Production App**: https://stratiri.vercel.app
 - **Supabase Dashboard**: https://supabase.com/dashboard/project/vnuithaqtpgbwmdvtxik
-- **GitHub**: https://github.com/scottystephens/stratifi
+- **GitHub**: https://github.com/scottystephens/stratiri
 
 ---
 

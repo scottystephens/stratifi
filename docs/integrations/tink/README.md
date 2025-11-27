@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stratifi integrates with Tink's Open Banking platform, providing access to 3,400+ financial institutions across Europe. This enables automatic account and transaction synchronization using PSD2/Open Banking standards.
+Stratiri integrates with Tink's Open Banking platform, providing access to 3,400+ financial institutions across Europe. This enables automatic account and transaction synchronization using PSD2/Open Banking standards.
 
 ## Status
 
@@ -99,7 +99,7 @@ Functions:
 ## User Flow
 
 1. **Connect**: User clicks "Connect with Tink" → Select bank → OAuth authorization → Redirected back
-2. **Sync Accounts**: Click sync button → Accounts fetched from Tink → Created in Stratifi
+2. **Sync Accounts**: Click sync button → Accounts fetched from Tink → Created in Stratiri
 3. **Sync Transactions**: Intelligent sync determines date range → Transactions imported → Displayed in UI
 
 ## API Endpoints
@@ -127,8 +127,8 @@ Query Parameters:
 - `provider_tokens` - OAuth token storage (generic)
 - `provider_accounts` - Tink account mappings
 - `provider_transactions` - Raw Tink transactions
-- `accounts` - Normalized Stratifi accounts
-- `transactions` - Normalized Stratifi transactions
+- `accounts` - Normalized Stratiri accounts
+- `transactions` - Normalized Stratiri transactions
 
 All tables have Row-Level Security (RLS) enabled.
 
@@ -159,10 +159,10 @@ Tink provides a Demo Bank for testing:
 
 ```bash
 # 1. Use Tink Console Demo Bank
-# 2. Create Tink connection in Stratifi
+# 2. Create Tink connection in Stratiri
 # 3. Use demo credentials during OAuth
 # 4. Sync to import demo accounts/transactions
-# 5. Verify data in Stratifi
+# 5. Verify data in Stratiri
 ```
 
 ## Troubleshooting
@@ -240,7 +240,7 @@ User Authorization → Tink OAuth → Token Storage (provider_tokens)
                                         ↓
                               Fetch Accounts (v2 API)
                                         ↓
-                          Create/Update Stratifi Accounts
+                          Create/Update Stratiri Accounts
                                         ↓
                      Fetch Transactions (v2 API, paginated)
                                         ↓
@@ -295,7 +295,7 @@ Tink uses the generic `BankingProvider` interface with specific implementations 
 **Production Credentials** (Stored in Vercel environment):
 - Client ID: `caceafe5840c485f98f3c33d92a236ac`
 - Client Secret: `[Stored securely]`
-- Redirect URI: `https://stratifi-pi.vercel.app/api/banking/tink/callback`
+- Redirect URI: `https://stratiri-pi.vercel.app/api/banking/tink/callback`
 
 ## Bank Coverage
 

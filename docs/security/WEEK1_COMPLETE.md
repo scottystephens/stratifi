@@ -136,16 +136,16 @@ UPSTASH_REDIS_REST_TOKEN=your_token
 
 **Required (for CORS):**
 ```env
-NEXT_PUBLIC_APP_URL=https://stratifi.vercel.app
+NEXT_PUBLIC_APP_URL=https://stratiri.vercel.app
 ```
 
 ### Deploy Commands
 ```bash
 # Deploy to production
-cd /Users/scottstephens/stratifi && vercel --prod
+cd /Users/scottstephens/stratiri && vercel --prod
 
 # View deployment logs
-vercel logs stratifi.vercel.app --follow
+vercel logs stratiri.vercel.app --follow
 ```
 
 ---
@@ -358,7 +358,7 @@ From **65/100** to **85/100** in one week!
 
 **Deploy Command:**
 ```bash
-cd /Users/scottstephens/stratifi && vercel --prod
+cd /Users/scottstephens/stratiri && vercel --prod
 ```
 
 **Congratulations on building world-class security! 🎉**

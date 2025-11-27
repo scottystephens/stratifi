@@ -1,4 +1,4 @@
-# Stratifi Testing Audit & Prioritized Roadmap
+# Stratiri Testing Audit & Prioritized Roadmap
 
 **Date:** November 23, 2025  
 **Purpose:** Comprehensive audit of what needs testing before client onboarding  

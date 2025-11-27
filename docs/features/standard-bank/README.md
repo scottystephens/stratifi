@@ -24,7 +24,7 @@ Clients need to provide **multiple subscription keys** from their OneHub Marketp
 4. **Subscription Key - Statements/Transactions API** - For transaction history
 
 ### Optional Credentials
-5. **Subscription Key - Payments API** - Only if initiating payments through Stratifi
+5. **Subscription Key - Payments API** - Only if initiating payments through Stratiri
 6. **API Key / Additional Secret** - If API product issues an extra key
 7. **Business / Division ID** - Business Online profile identifier
 
@@ -51,7 +51,7 @@ Clients need to provide **multiple subscription keys** from their OneHub Marketp
 ```
 Client Credentials (OneHub)
          ↓
-Stratifi Credential Vault (encrypted)
+Stratiri Credential Vault (encrypted)
          ↓
 Standard Bank OneHub APIs
     ├── Balance Enquiry API
@@ -79,11 +79,11 @@ Standard Bank OneHub APIs
    - Balance Enquiry
    - Statements/Transactions
    - (Optional) Payments
-3. **Client provides credentials** to Stratifi:
+3. **Client provides credentials** to Stratiri:
    - App ID & Client Secret
    - All subscription keys
-4. **Stratifi encrypts** and stores credentials
-5. **Stratifi connects** to Standard Bank APIs
+4. **Stratiri encrypts** and stores credentials
+5. **Stratiri connects** to Standard Bank APIs
 6. **Data syncs** automatically
 
 ---

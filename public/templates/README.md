@@ -1,6 +1,6 @@
 # CSV Import Templates
 
-This directory contains CSV templates for bulk importing data into Stratifi.
+This directory contains CSV templates for bulk importing data into Stratiri.
 
 ## Available Templates
 
@@ -74,7 +74,7 @@ Import bank accounts, credit lines, and financial accounts.
 3. **Replace example data** with your actual data
 4. **Keep the header row** exactly as shown
 5. **Save as CSV** (UTF-8 encoding recommended)
-6. **Upload** through the Stratifi import interface
+6. **Upload** through the Stratiri import interface
 
 ---
 
@@ -123,5 +123,5 @@ Import bank accounts, credit lines, and financial accounts.
 
 ## Support
 
-For issues or questions about CSV imports, contact your administrator or refer to the Stratifi documentation.
+For issues or questions about CSV imports, contact your administrator or refer to the Stratiri documentation.
 

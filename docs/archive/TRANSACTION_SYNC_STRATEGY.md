@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the strategy for syncing transactions from banking providers (like Tink) to Stratifi. The goals are:
+This document outlines the strategy for syncing transactions from banking providers (like Tink) to Stratiri. The goals are:
 
 1. **Completeness**: Always have up-to-date transaction data
 2. **Efficiency**: Minimize API calls to reduce costs

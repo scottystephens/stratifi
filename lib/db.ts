@@ -19,7 +19,7 @@ function createPool(databaseUrl: string) {
       max: 10, // Lower max for pooler
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      application_name: 'stratifi',
+      application_name: 'stratiri',
     })
   }
   
@@ -40,7 +40,7 @@ function createPool(databaseUrl: string) {
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-    application_name: 'stratifi',
+    application_name: 'stratiri',
   })
 }
 

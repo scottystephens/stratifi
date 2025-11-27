@@ -45,7 +45,7 @@ Three new tables with full RLS policies and indexes:
 - Stores **ALL** account data from Tink API v2
 - Balances (booked & available), IBAN/BIC, account types
 - `raw_data JSONB` - Full API response
-- Links to normalized `accounts` table via `stratifi_account_id`
+- Links to normalized `accounts` table via `stratiri_account_id`
 
 **Key Fields:**
 - `account_id` - Tink's unique account ID
@@ -232,7 +232,7 @@ Similar to Plaid, Tink follows a two-layer architecture:
 - `idx_tink_accounts_tenant` - Filter by tenant
 - `idx_tink_accounts_connection` - Filter by connection
 - `idx_tink_accounts_account_id` - Lookup by ID
-- `idx_tink_accounts_stratifi_id` - Join to accounts table
+- `idx_tink_accounts_stratiri_id` - Join to accounts table
 - `idx_tink_accounts_iban` - IBAN lookups (partial index)
 
 ### Row-Level Security (RLS)

@@ -141,6 +141,6 @@ FROM plaid_transactions;
 ---
 
 **Status:** ✅ Deployed to production  
-**Deployment:** https://stratifi-pi.vercel.app  
+**Deployment:** https://stratiri-pi.vercel.app  
 **Ready for:** Testing with real Plaid connection
 

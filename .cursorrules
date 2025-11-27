@@ -1,10 +1,27 @@
-# Stratifi - Cursor Rules
+# Stratiri - Cursor Rules
 
 ## Project Overview
 
-Stratifi is a **Strategic Financial Intelligence Platform** - a production-ready multi-tenant SaaS platform for intelligent treasury management, bank account operations, and automated data ingestion.
+Stratiri is a **Strategic Financial Intelligence Platform** - a production-ready multi-tenant SaaS platform for intelligent treasury management, bank account operations, and automated data ingestion.
 
-**Live Production:** https://stratifi.vercel.app
+**Live Production:** https://stratiri.vercel.app
+
+### Quick Actions (Cursor)
+
+**Run Supabase Migration:**
+```bash
+cd /Users/scottstephens/stratifi && npx tsx scripts/utilities/run-migration-cli.ts scripts/migrations/XX-name.sql
+```
+
+**Deploy to Production:**
+```bash
+cd /Users/scottstephens/stratifi && vercel --prod
+```
+
+**Link Project:**
+```bash
+cd /Users/scottstephens/stratifi && npx supabase link --project-ref vnuithaqtpgbwmdvtxik
+```
 
 ### Core Features
 - Multi-tenant SaaS architecture with row-level security
@@ -54,7 +71,7 @@ Stratifi is a **Strategic Financial Intelligence Platform** - a production-ready
 ### Vercel Deployments
 - **Production:** `cd /Users/scottstephens/stratifi && vercel --prod`
 - **Preview:** `cd /Users/scottstephens/stratifi && vercel`
-- **Logs:** `cd /Users/scottstephens/stratifi && vercel logs stratifi.vercel.app --since 1h`
+- **Logs:** `cd /Users/scottstephens/stratifi && vercel logs stratiri.vercel.app --since 1h`
 - **Env vars:** `cd /Users/scottstephens/stratifi && vercel env pull .env.local`
 
 ### General CLI Rules

@@ -50,6 +50,9 @@ export interface RawTransactionsResponse extends RawProviderResponse {
   responseType: 'transactions';
   transactionCount: number;
 
+  /** Account ID these transactions belong to (if account-specific fetch) */
+  accountId?: string;
+
   /** Pagination information if applicable */
   pagination?: {
     cursor?: string;
@@ -81,6 +84,13 @@ export interface TransactionFetchOptions {
 
   /** Account ID to fetch transactions for */
   accountId?: string;
+
+  /**
+   * Fetch only records modified after this date (for incremental sync)
+   * Xero: Uses If-Modified-Since header
+   * Other providers: May use provider-specific parameters
+   */
+  modifiedSince?: string;
 }
 
 /**
@@ -100,6 +110,9 @@ export interface ConnectionCredentials {
 
   /** Provider-specific configuration */
   config?: Record<string, any>;
+
+  /** Provider-specific metadata (e.g., xeroTenantId, plaidItemId) */
+  metadata?: Record<string, any>;
 }
 
 /**

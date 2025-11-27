@@ -180,7 +180,7 @@ async function createTestAccounts() {
     console.log('  4. Business Credit Card (USD) - -$8,500');
     console.log('');
     console.log('You can now:');
-    console.log('  • View at: https://stratifi-pi.vercel.app/accounts');
+    console.log('  • View at: https://stratiri-pi.vercel.app/accounts');
     console.log('  • Link CSV imports to these accounts');
     console.log('  • Import bank statements');
     console.log('');

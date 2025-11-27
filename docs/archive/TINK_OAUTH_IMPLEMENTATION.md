@@ -2,24 +2,24 @@
 
 ## Overview
 
-Stratifi implements Tink's banking aggregation using the **standard OAuth 2.0 Authorization Code Flow**, following industry best practices and Tink's official documentation.
+Stratiri implements Tink's banking aggregation using the **standard OAuth 2.0 Authorization Code Flow**, following industry best practices and Tink's official documentation.
 
 ## Architecture
 
 ### OAuth 2.0 Flow
 
 ```
-User → Stratifi → Tink Authorization → Bank Login → Tink Callback → Stratifi
+User → Stratiri → Tink Authorization → Bank Login → Tink Callback → Stratiri
 ```
 
-1. **User initiates connection** - Clicks "Connect Tink" in Stratifi
-2. **Stratifi creates connection** - Generates secure state parameter
+1. **User initiates connection** - Clicks "Connect Tink" in Stratiri
+2. **Stratiri creates connection** - Generates secure state parameter
 3. **Redirect to Tink** - Standard OAuth redirect to Tink's authorization server
 4. **Tink handles authentication** - User authenticates with their bank via Tink
-5. **Bank authorization** - User authorizes Stratifi to access their data
-6. **Callback to Stratifi** - Tink redirects back with authorization code
-7. **Token exchange** - Stratifi exchanges code for access/refresh tokens
-8. **Data sync** - Stratifi fetches accounts and transactions
+5. **Bank authorization** - User authorizes Stratiri to access their data
+6. **Callback to Stratiri** - Tink redirects back with authorization code
+7. **Token exchange** - Stratiri exchanges code for access/refresh tokens
+8. **Data sync** - Stratiri fetches accounts and transactions
 
 ## Implementation Details
 
@@ -60,7 +60,7 @@ The callback:
 3. Stores tokens securely in the database
 4. Fetches user info from Tink
 5. Automatically syncs accounts in the background
-6. Redirects user back to Stratifi
+6. Redirects user back to Stratiri
 
 ### 3. Token Storage
 
@@ -105,15 +105,15 @@ Tokens are automatically refreshed when:
 2. Redirects to Tink's authorization page
 3. User selects their bank
 4. User logs in to their bank
-5. User authorizes Stratifi
-6. Redirects back to Stratifi
+5. User authorizes Stratiri
+6. Redirects back to Stratiri
 7. Accounts appear automatically
 
 ### Subsequent Connections
 - Tink may cache the user's session
 - User might not need to re-enter credentials
 - This is **normal behavior** for OAuth providers
-- Controlled by Tink, not Stratifi
+- Controlled by Tink, not Stratiri
 
 ## Testing
 
@@ -147,7 +147,7 @@ Tokens are automatically refreshed when:
 **Cause:** Redirect URI doesn't match Tink Console  
 **Solution:** Verify redirect URI in Tink Console matches exactly:
 ```
-https://stratifi-pi.vercel.app/api/banking/tink/callback
+https://stratiri-pi.vercel.app/api/banking/tink/callback
 ```
 
 ### Issue: "OAuth token not found"

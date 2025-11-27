@@ -1,4 +1,4 @@
-# Testing Strategy for Stratifi - Production Client Onboarding
+# Testing Strategy for Stratiri - Production Client Onboarding
 
 **Date:** November 23, 2025  
 **Status:** 🚨 **CRITICAL - NO TESTS CURRENTLY EXIST**  

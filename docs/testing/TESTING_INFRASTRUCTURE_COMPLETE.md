@@ -270,7 +270,7 @@ const mockSupabase = createMockSupabaseClient();
 ## CI/CD Setup Instructions
 
 ### 1. Add GitHub Secrets
-Go to: `https://github.com/YOUR_USERNAME/stratifi/settings/secrets/actions`
+Go to: `https://github.com/YOUR_USERNAME/stratiri/settings/secrets/actions`
 
 Add all required secrets listed above.
 
@@ -281,7 +281,7 @@ Add all required secrets listed above.
 
 # Option 2: Create separate test project
 # - Go to https://supabase.com/dashboard
-# - Create new project "stratifi-test"
+# - Create new project "stratiri-test"
 # - Run migrations on test project
 # - Use test project credentials for TEST_SUPABASE_* secrets
 ```
@@ -294,7 +294,7 @@ git commit -m "Test CI/CD"
 git push
 
 # Check GitHub Actions:
-# https://github.com/YOUR_USERNAME/stratifi/actions
+# https://github.com/YOUR_USERNAME/stratiri/actions
 ```
 
 ---

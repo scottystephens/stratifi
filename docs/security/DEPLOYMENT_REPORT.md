@@ -9,8 +9,8 @@
 ## 🎯 DEPLOYMENT SUMMARY
 
 ### Production URLs
-- **Primary:** https://stratifi-iajwyp90a-scottystephens-projects.vercel.app
-- **Inspect:** https://vercel.com/scottystephens-projects/stratifi/6sLD8AmLS6iwrMU8beViKfUBz6EB
+- **Primary:** https://stratiri-iajwyp90a-scottystephens-projects.vercel.app
+- **Inspect:** https://vercel.com/scottystephens-projects/stratiri/6sLD8AmLS6iwrMU8beViKfUBz6EB
 
 ### Build Results
 ```
@@ -258,7 +258,7 @@ scripts/migrations/41-fix-supabase-security-safe.sql  # RLS + search_path
 ### Check Rate Limiting
 ```bash
 # Test auth endpoint
-curl -i https://stratifi-iajwyp90a-scottystephens-projects.vercel.app/api/dashboard
+curl -i https://stratiri-iajwyp90a-scottystephens-projects.vercel.app/api/dashboard
 
 # Look for headers:
 X-RateLimit-Limit: 100
@@ -268,7 +268,7 @@ X-RateLimit-Reset: 1700000000
 
 ### Check Security Headers
 ```bash
-curl -I https://stratifi-iajwyp90a-scottystephens-projects.vercel.app
+curl -I https://stratiri-iajwyp90a-scottystephens-projects.vercel.app
 
 # Look for:
 Content-Security-Policy: ...
@@ -280,7 +280,7 @@ X-Content-Type-Options: nosniff
 ### Check CSRF Protection
 ```bash
 # Get CSRF token
-curl https://stratifi-iajwyp90a-scottystephens-projects.vercel.app/api/csrf-token
+curl https://stratiri-iajwyp90a-scottystephens-projects.vercel.app/api/csrf-token
 
 # Returns: {"csrfToken":"base64_encoded_token"}
 ```
@@ -313,7 +313,7 @@ If issues arise, rollback is simple:
 vercel ls
 
 # Rollback to previous
-vercel alias <previous-url> stratifi.vercel.app
+vercel alias <previous-url> stratiri.vercel.app
 ```
 
 ### Option 3: Git Revert
@@ -403,7 +403,7 @@ As per `docs/security/SECURITY_SUMMARY.md`:
 
 **Logs:**
 ```bash
-vercel logs stratifi-iajwyp90a-scottystephens-projects.vercel.app --follow
+vercel logs stratiri-iajwyp90a-scottystephens-projects.vercel.app --follow
 ```
 
 **Documentation:**

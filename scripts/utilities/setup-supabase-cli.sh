@@ -8,7 +8,7 @@ PROJECT_REF="vnuithaqtpgbwmdvtxik"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-echo "🚀 Setting up Supabase CLI for Stratifi"
+echo "🚀 Setting up Supabase CLI for Stratiri"
 echo "========================================"
 echo ""
 

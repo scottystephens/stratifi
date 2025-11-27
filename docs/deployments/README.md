@@ -58,7 +58,7 @@ vercel
 vercel --prod
 
 # View logs
-vercel logs stratifi.vercel.app --since 1h
+vercel logs stratiri.vercel.app --since 1h
 
 # Check deployment status
 vercel ls

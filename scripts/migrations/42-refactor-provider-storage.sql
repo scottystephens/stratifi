@@ -14,7 +14,7 @@
 -- 2. Drop old tables at end
 -- 3. Rename _v2 tables to canonical names
 --
--- Author: Stratifi Team
+-- Author: Stratiri Team
 -- Date: November 2025
 -- =====================================================
 
@@ -52,7 +52,7 @@ CREATE TABLE plaid_accounts_v2 (
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Link to normalized account
-    stratifi_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    stratiri_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
 
     UNIQUE(connection_id, account_id)
 );
@@ -79,7 +79,7 @@ CREATE TABLE plaid_transactions_v2 (
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Link to normalized transaction
-    stratifi_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
+    stratiri_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
 
     UNIQUE(connection_id, transaction_id)
 );
@@ -118,7 +118,7 @@ CREATE TABLE tink_accounts_v2 (
     raw_institution_data JSONB,
     first_fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    stratifi_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    stratiri_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     UNIQUE(connection_id, account_id)
 );
 
@@ -133,7 +133,7 @@ CREATE TABLE tink_transactions_v2 (
     date DATE,
     first_fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    stratifi_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
+    stratiri_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
     UNIQUE(connection_id, transaction_id)
 );
 
@@ -166,7 +166,7 @@ CREATE TABLE direct_bank_accounts (
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Link to normalized account
-    stratifi_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    stratiri_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
 
     UNIQUE(connection_id, external_account_id)
 );
@@ -192,7 +192,7 @@ CREATE TABLE direct_bank_transactions (
     last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Link to normalized transaction
-    stratifi_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
+    stratiri_transaction_id TEXT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
 
     UNIQUE(connection_id, external_transaction_id)
 );
@@ -435,13 +435,13 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_tenant ON plaid_accounts(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_connection ON plaid_accounts(connection_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_accounts_account_id ON plaid_accounts(account_id);
-CREATE INDEX IF NOT EXISTS idx_plaid_accounts_stratifi_id ON plaid_accounts(stratifi_account_id);
+CREATE INDEX IF NOT EXISTS idx_plaid_accounts_stratiri_id ON plaid_accounts(stratiri_account_id);
 
 CREATE INDEX IF NOT EXISTS idx_plaid_transactions_tenant ON plaid_transactions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_transactions_connection ON plaid_transactions(connection_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_transactions_account_id ON plaid_transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_transactions_date ON plaid_transactions(date);
-CREATE INDEX IF NOT EXISTS idx_plaid_transactions_stratifi_id ON plaid_transactions(stratifi_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_plaid_transactions_stratiri_id ON plaid_transactions(stratiri_transaction_id);
 
 CREATE INDEX IF NOT EXISTS idx_plaid_cursors_tenant ON plaid_sync_cursors(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_plaid_cursors_connection ON plaid_sync_cursors(connection_id);
@@ -450,20 +450,20 @@ CREATE INDEX IF NOT EXISTS idx_plaid_cursors_connection ON plaid_sync_cursors(co
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_tenant ON tink_accounts(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_connection ON tink_accounts(connection_id);
 CREATE INDEX IF NOT EXISTS idx_tink_accounts_account_id ON tink_accounts(account_id);
-CREATE INDEX IF NOT EXISTS idx_tink_accounts_stratifi_id ON tink_accounts(stratifi_account_id);
+CREATE INDEX IF NOT EXISTS idx_tink_accounts_stratiri_id ON tink_accounts(stratiri_account_id);
 
 CREATE INDEX IF NOT EXISTS idx_tink_transactions_tenant ON tink_transactions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tink_transactions_connection ON tink_transactions(connection_id);
 CREATE INDEX IF NOT EXISTS idx_tink_transactions_account_id ON tink_transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_tink_transactions_date ON tink_transactions(date);
-CREATE INDEX IF NOT EXISTS idx_tink_transactions_stratifi_id ON tink_transactions(stratifi_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_tink_transactions_stratiri_id ON tink_transactions(stratiri_transaction_id);
 
 -- Direct Bank indexes (already created above, but ensuring they exist)
 CREATE INDEX IF NOT EXISTS idx_direct_bank_accounts_tenant ON direct_bank_accounts(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_direct_bank_accounts_stratifi_id ON direct_bank_accounts(stratifi_account_id);
+CREATE INDEX IF NOT EXISTS idx_direct_bank_accounts_stratiri_id ON direct_bank_accounts(stratiri_account_id);
 
 CREATE INDEX IF NOT EXISTS idx_direct_bank_transactions_tenant ON direct_bank_transactions(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_direct_bank_transactions_stratifi_id ON direct_bank_transactions(stratifi_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_direct_bank_transactions_stratiri_id ON direct_bank_transactions(stratiri_transaction_id);
 
 -- =====================================================
 -- MIGRATION COMPLETE

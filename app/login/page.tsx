@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { StratifiLogoColored } from '@/components/stratifi-logo'
 import Link from 'next/link'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
@@ -34,10 +33,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md p-10 shadow-lg">
         <div className="mb-10 text-center">
           <div className="flex justify-center mb-6">
-            <StratifiLogoColored size="lg" />
+            <span className="text-3xl font-display font-bold text-primary">Strategic Finance</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your Stratifi account</p>
+          <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
         {error && (

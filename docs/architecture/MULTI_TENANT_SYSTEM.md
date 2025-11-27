@@ -1,4 +1,4 @@
-# Stratifi Multi-Tenant System - Complete Documentation
+# Stratiri Multi-Tenant System - Complete Documentation
 
 ## 🎉 Phase 1 MVP: Production-Quality Multi-Tenant SaaS Foundation
 
@@ -195,7 +195,7 @@ const transactions = await getTransactionsByTenant(currentTenant.id)
 
 ### Step 1: Sign Up & Create Organization
 
-1. Visit: `https://stratifi-pi.vercel.app/signup`
+1. Visit: `https://stratiri-pi.vercel.app/signup`
 2. Create account with email/password
 3. On `/onboarding`, create your organization:
    - Name: "Test Company"

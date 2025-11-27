@@ -80,7 +80,7 @@ export function DirectBankApiCard({ tenantId }: DirectBankApiCardProps) {
       <Card className="border-2 border-dashed p-6">
         <h3 className="text-lg font-semibold">Direct Bank APIs</h3>
         <p className="text-sm text-muted-foreground mt-2">
-          No direct bank providers are available yet. Contact Stratifi support to enable
+          No direct bank providers are available yet. Contact Stratiri support to enable
           closed beta access.
         </p>
       </Card>
@@ -330,7 +330,7 @@ export function DirectBankApiCard({ tenantId }: DirectBankApiCardProps) {
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                placeholder="Any implementation context to share with Stratifi"
+                placeholder="Any implementation context to share with Stratiri"
               />
             </div>
           </div>

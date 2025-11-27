@@ -1,8 +1,8 @@
-# Stratifi vs Treasury4 - Feature Comparison
+# Stratiri vs Treasury4 - Feature Comparison
 
 ## ✅ Features Implemented (Feature Parity)
 
-| Feature | Treasury4 | Stratifi | Status |
+| Feature | Treasury4 | Stratiri | Status |
 |---------|-----------|-----------|--------|
 | **Real-time Cash Visibility** | ✅ | ✅ | ✅ Complete |
 | Multi-account aggregation | ✅ | ✅ | ✅ Complete |
@@ -40,29 +40,29 @@
 
 ### 1. **Single Source of Truth**
 - **Treasury4**: Consolidates data from banks and ERPs
-- **Stratifi**: ✅ Unified data model across all modules
+- **Stratiri**: ✅ Unified data model across all modules
 
 ### 2. **Real-time Visibility**
 - **Treasury4**: Live bank balances and transactions
-- **Stratifi**: ✅ Real-time data fetching and display (ready for API integration)
+- **Stratiri**: ✅ Real-time data fetching and display (ready for API integration)
 
 ### 3. **AI-Powered Forecasting**
 - **Treasury4**: ML models learn from historical data
-- **Stratifi**: ✅ Forecast engine with predictions, actuals, variance tracking
+- **Stratiri**: ✅ Forecast engine with predictions, actuals, variance tracking
 
 ### 4. **Audit-Ready**
 - **Treasury4**: Complete audit trails and compliance tools
-- **Stratifi**: ✅ Full transaction history and payment audit trails
+- **Stratiri**: ✅ Full transaction history and payment audit trails
 
 ### 5. **Fast Implementation**
 - **Treasury4**: 5-week implementation
-- **Stratifi**: ✅ Instant prototype, scalable architecture
+- **Stratiri**: ✅ Instant prototype, scalable architecture
 
 ## 🚀 What We Built Better
 
-| Feature | Stratifi Advantage |
+| Feature | Stratiri Advantage |
 |---------|-------------------|
-| **Open Source** | Treasury4 is proprietary, Stratifi code is yours |
+| **Open Source** | Treasury4 is proprietary, Stratiri code is yours |
 | **Customizable** | Full control over features and integrations |
 | **Modern Stack** | Next.js 14, TypeScript, latest best practices |
 | **No Vendor Lock-in** | Deploy anywhere, integrate with anyone |
@@ -79,7 +79,7 @@
 - ERP data enrichment
 - Forecast with ML
 
-**Stratifi**:
+**Stratiri**:
 - ✅ Same data model
 - ✅ API-ready structure (just connect bank APIs)
 - ✅ Transaction categorization
@@ -95,7 +95,7 @@
 - Compliance documentation
 - Entity hierarchy
 
-**Stratifi**:
+**Stratiri**:
 - ✅ Complete entity repository
 - ✅ Bank account linkage
 - ✅ Multi-level hierarchies (parent-subsidiary)
@@ -111,7 +111,7 @@
 - Global payment support
 - Audit trails
 
-**Stratifi**:
+**Stratiri**:
 - ✅ Full approval workflow (Draft → Pending → Approved → Scheduled)
 - ✅ Priority management
 - ✅ Approver tracking
@@ -127,7 +127,7 @@
 - Custom reporting
 - Anomaly detection
 
-**Stratifi**:
+**Stratiri**:
 - ✅ Recharts for visualization
 - ✅ Interactive charts (Line, Bar, Pie, Area)
 - ✅ Multiple dashboard views
@@ -140,7 +140,7 @@
 
 ### Data Integration (Just Add):
 ```typescript
-// Stratifi is ready for:
+// Stratiri is ready for:
 - Plaid API integration (bank connections)
 - Direct bank API integration (JPMorgan, Chase, etc.)
 - ERP integration (NetSuite, SAP, Oracle)
@@ -149,7 +149,7 @@
 
 ### Security (Easy to Add):
 ```typescript
-// Stratifi supports:
+// Stratiri supports:
 - NextAuth.js for authentication
 - Role-based access control (RBAC)
 - OAuth 2.0 / SAML
@@ -159,7 +159,7 @@
 
 ### Database (Swap CSV for):
 ```typescript
-// Stratifi works with:
+// Stratiri works with:
 - PostgreSQL (recommended)
 - MySQL
 - MongoDB
@@ -176,7 +176,7 @@
 - Custom color scheme
 - Desktop-focused
 
-### Stratifi:
+### Stratiri:
 - ✅ Professional modern UI
 - ✅ Recharts interactive visualization
 - ✅ Tailwind CSS design system
@@ -195,7 +195,7 @@
 - Annual maintenance
 - Vendor support costs
 
-### Stratifi:
+### Stratiri:
 - $0 software licensing
 - Infrastructure only (AWS/Vercel/etc)
 - Self-service or hire developers
@@ -211,7 +211,7 @@
 - Cloud-native ✅
 - Sigma embedded ✅
 
-### Stratifi:
+### Stratiri:
 - Open architecture ✅
 - Single-tenant ready ✅
 - API-first design ✅
@@ -223,7 +223,7 @@
 
 ## 🎯 Use Cases - Side by Side
 
-| Use Case | Treasury4 | Stratifi |
+| Use Case | Treasury4 | Stratiri |
 |----------|-----------|-----------|
 | Mid-market company (50-500 employees) | ✅ $$$$ | ✅ $ |
 | Enterprise (500+ employees) | ✅ $$$$$ | ✅ $$ |
@@ -245,7 +245,7 @@
 5. Ongoing vendor support
 6. Feature requests → vendor roadmap
 
-### Stratifi:
+### Stratiri:
 1. Clone repository ✅ (Done!)
 2. Add authentication (1 day)
 3. Connect database (1 day)
@@ -258,13 +258,13 @@
 
 | Category | Winner | Reason |
 |----------|--------|--------|
-| **Speed to Prototype** | Stratifi | Instant vs 5 weeks |
-| **Customization** | Stratifi | Full source control |
-| **Cost** | Stratifi | No licensing fees |
+| **Speed to Prototype** | Stratiri | Instant vs 5 weeks |
+| **Customization** | Stratiri | Full source control |
+| **Cost** | Stratiri | No licensing fees |
 | **Enterprise Support** | Treasury4 | Dedicated vendor team |
 | **Feature Set** | Tie | Complete parity |
-| **Modern Tech Stack** | Stratifi | Latest Next.js/React |
-| **Flexibility** | Stratifi | Deploy anywhere |
+| **Modern Tech Stack** | Stratiri | Latest Next.js/React |
+| **Flexibility** | Stratiri | Deploy anywhere |
 | **Time to Market** | Treasury4 | Proven enterprise solution |
 
 ## 🎯 The Bottom Line
@@ -275,7 +275,7 @@
 - Have budget for licensing
 - Want 5-week professional implementation
 
-**Choose Stratifi if you:**
+**Choose Stratiri if you:**
 - ✅ Want full control and customization
 - ✅ Have development resources
 - ✅ Want to avoid vendor lock-in
@@ -284,7 +284,7 @@
 - ✅ Prefer lower total cost of ownership
 - ✅ Need rapid customization
 
-## 💡 Stratifi Advantage Summary
+## 💡 Stratiri Advantage Summary
 
 1. **$0 licensing costs** - Only pay for infrastructure
 2. **Full source code** - Modify anything, anytime
@@ -297,5 +297,5 @@
 
 ---
 
-**Stratifi: Enterprise treasury management, your way.**
+**Stratiri: Enterprise treasury management, your way.**
 

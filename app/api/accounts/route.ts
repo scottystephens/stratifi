@@ -30,8 +30,12 @@ export async function GET(req: NextRequest) {
     // Get single account or all accounts
     if (accountId) {
       // Try to query by both account_id (TEXT primary key) and id (UUID)
-      // This allows the API to work with both ID formats
-      const { data, error } = await supabase
+      // First try by UUID id, then by account_id (TEXT)
+      let data = null;
+      let error = null;
+      
+      // Try by UUID id first
+      const byIdResult = await supabase
         .from('accounts')
         .select(`
           *,
@@ -56,16 +60,57 @@ export async function GET(req: NextRequest) {
           )
         `)
         .eq('tenant_id', tenantId)
-        .or(`account_id.eq.${accountId},id.eq.${accountId}`) // Match either account_id (TEXT) or id (UUID)
+        .eq('id', accountId)
         .order('statement_date', {
           ascending: false,
           foreignTable: 'account_statements_account_id_fkey',
         })
         .limit(1, { foreignTable: 'account_statements_account_id_fkey' })
-        .single();
+        .maybeSingle();
+      
+      if (byIdResult.data) {
+        data = byIdResult.data;
+      } else {
+        // Try by account_id (TEXT primary key)
+        const byAccountIdResult = await supabase
+          .from('accounts')
+          .select(`
+            *,
+            connections:connection_id(
+              provider,
+              name,
+              status
+            ),
+            provider_accounts:provider_accounts_account_id_fkey(
+              last_sync_status,
+              last_sync_error,
+              last_sync_duration_ms,
+              last_synced_at
+            ),
+            latest_statement:account_statements_account_id_fkey(
+              statement_date,
+              ending_balance,
+              available_balance,
+              currency,
+              source,
+              confidence
+            )
+          `)
+          .eq('tenant_id', tenantId)
+          .eq('account_id', accountId)
+          .order('statement_date', {
+            ascending: false,
+            foreignTable: 'account_statements_account_id_fkey',
+          })
+          .limit(1, { foreignTable: 'account_statements_account_id_fkey' })
+          .maybeSingle();
+        
+        data = byAccountIdResult.data;
+        error = byAccountIdResult.error;
+      }
 
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error || !data) {
+        return NextResponse.json({ error: error?.message || 'Account not found' }, { status: error ? 500 : 404 });
       }
 
       // Flatten connection data for consistency

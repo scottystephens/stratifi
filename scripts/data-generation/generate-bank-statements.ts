@@ -304,7 +304,7 @@ All CSV files follow this format:
 
 ## Usage
 
-### Import to Stratifi
+### Import to Stratiri
 
 1. Go to \`/connections/new\`
 2. Upload CSV file

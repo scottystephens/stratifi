@@ -103,6 +103,27 @@ export default function DashboardPage() {
   const { data: accounts = [] } = useAccounts(currentTenant?.id);
   const { data: entities = [] } = useEntities(currentTenant?.id);
 
+  // Helper functions
+  const getDateRangeLabel = (value: string) => {
+    const labels: Record<string, string> = {
+      '7d': 'Last 7 days',
+      '30d': 'Last 30 days',
+      '90d': 'Last 90 days',
+      '1y': 'Last year',
+      'all': 'All time',
+    };
+    return labels[value] || value;
+  };
+
+  const getTransactionTypeLabel = (value: string) => {
+    const labels: Record<string, string> = {
+      'all': 'All',
+      'credit': 'Credits Only',
+      'debit': 'Debits Only',
+    };
+    return labels[value] || value;
+  };
+
   // Available filter fields for dynamic filters
   const availableFilterFields = [
     { value: 'category', label: 'Transaction Category' },
@@ -251,23 +272,25 @@ export default function DashboardPage() {
 
   if (!currentTenant) {
     return (
-      <div className="p-8">
-        <Card className="p-12 text-center">
-          <h2 className="text-2xl font-semibold mb-4">No Organization Selected</h2>
-          <p className="text-muted-foreground">
-            Please select an organization from the sidebar.
-          </p>
-        </Card>
+      <div className="min-h-screen bg-stone-50">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-display font-bold text-stone-900 mb-4">No Organization Selected</h2>
+            <p className="text-stone-500">
+              Please select an organization from the sidebar.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-stone-50">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         </div>
       </div>
@@ -276,44 +299,25 @@ export default function DashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="p-8">
-        <Card className="p-12 text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Error Loading Dashboard</h2>
-          <p className="text-muted-foreground">{error || 'Failed to load dashboard data'}</p>
-        </Card>
+      <div className="min-h-screen bg-stone-50">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-display font-bold text-stone-900 mb-2">Error Loading Dashboard</h2>
+            <p className="text-stone-500">{error || 'Failed to load dashboard data'}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Get display names for active filters
-  const getDateRangeLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      '7d': 'Last 7 days',
-      '30d': 'Last 30 days',
-      '90d': 'Last 90 days',
-      '1y': 'Last year',
-      'all': 'All time',
-    };
-    return labels[value] || value;
-  };
-
-  const getTransactionTypeLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      'all': 'All',
-      'credit': 'Credits Only',
-      'debit': 'Debits Only',
-    };
-    return labels[value] || value;
-  };
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-stone-50">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-stone-900">Dashboard</h1>
+          <p className="text-stone-500">
             Real-time treasury insights and cash visibility
           </p>
         </div>
@@ -712,85 +716,77 @@ export default function DashboardPage() {
         {filterLoading && (
           <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
             <div className="flex flex-col items-center space-y-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="text-sm text-gray-600">Updating data...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="text-sm text-stone-600">Updating data...</span>
             </div>
           </div>
         )}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cash Position</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(data.totalCashUSD, 'USD')}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Across {data.accountCount} account{data.accountCount !== 1 ? 's' : ''}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Cash Position</div>
+              <DollarSign className="h-4 w-4 text-stone-400" />
+            </div>
+            <div className="text-3xl font-display font-black text-stone-900 tracking-tight tabular-nums">
+              {formatCurrency(data.totalCashUSD, 'USD')}
+            </div>
+            <p className="text-xs text-stone-500">
+              Across {data.accountCount} account{data.accountCount !== 1 ? 's' : ''}
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Cash Flow (7d)</CardTitle>
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wider">Net Cash Flow (7d)</div>
               {data.netCashFlow >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-primary" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${data.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {data.netCashFlow >= 0 ? '+' : ''}{formatCurrency(data.netCashFlow, 'USD')}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                In: {formatCurrency(data.inflows, 'USD')} | Out: {formatCurrency(data.outflows, 'USD')}
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className={`text-3xl font-display font-black tracking-tight tabular-nums ${data.netCashFlow >= 0 ? 'text-primary' : 'text-red-600'}`}>
+              {data.netCashFlow >= 0 ? '+' : ''}{formatCurrency(data.netCashFlow, 'USD')}
+            </div>
+            <p className="text-xs text-stone-500">
+              In: {formatCurrency(data.inflows, 'USD')} | Out: {formatCurrency(data.outflows, 'USD')}
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Entities</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data.entityCount}</div>
-              <p className="text-xs text-muted-foreground">
-                <Link href="/entities" className="text-blue-600 hover:underline">
-                  View all entities
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wider">Entities</div>
+              <Building2 className="h-4 w-4 text-stone-400" />
+            </div>
+            <div className="text-3xl font-black text-stone-900 tracking-tight tabular-nums">{data.entityCount}</div>
+            <p className="text-xs text-stone-500">
+                <Link href="/entities" className="text-primary hover:text-primary/80 hover:underline">
+                View all entities
+              </Link>
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data.transactionCount}</div>
-              <p className="text-xs text-muted-foreground">
-                All time
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Transactions</div>
+              <Activity className="h-4 w-4 text-stone-400" />
+            </div>
+            <div className="text-3xl font-black text-stone-900 tracking-tight tabular-nums">{data.transactionCount}</div>
+            <p className="text-xs text-stone-500">
+              All time
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           {/* Recent Transactions */}
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>Latest activity across all accounts</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="col-span-4 bg-white rounded-xl border border-stone-200 shadow-sm">
+            <div className="p-6 border-b border-stone-100">
+              <div className="font-display font-bold text-xl text-stone-900 mb-1">Recent Transactions</div>
+              <div className="text-sm text-stone-500">Latest activity across all accounts</div>
+            </div>
+            <div className="p-6">
               {data.recentTransactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-stone-400">
                   <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No recent transactions</p>
                 </div>
@@ -799,24 +795,24 @@ export default function DashboardPage() {
                 {data.recentTransactions.map((transaction) => (
                   <div
                       key={transaction.transaction_id}
-                    className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                    className="flex items-center justify-between border-b border-stone-100 pb-4 last:border-0 last:pb-0"
                   >
                     <div className="flex-1">
-                      <p className="font-medium">{transaction.description}</p>
+                      <p className="font-medium text-stone-900">{transaction.description}</p>
                       <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-stone-500">
                             {new Date(transaction.date).toLocaleDateString()}
                         </span>
                         <Badge className={getStatusColor(transaction.status)}>
                           {transaction.status}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-stone-500">
                           {transaction.category}
                         </span>
                       </div>
                     </div>
-                    <div className={`font-semibold ${
-                      transaction.type === 'Credit' ? 'text-green-600' : 'text-red-600'
+                    <div className={`font-mono font-medium tabular-nums ${
+                      transaction.type === 'Credit' ? 'text-primary' : 'text-red-600'
                     }`}>
                       {transaction.type === 'Credit' ? '+' : '-'}
                       {formatCurrency(Math.abs(transaction.amount), transaction.currency)}
@@ -825,18 +821,18 @@ export default function DashboardPage() {
                 ))}
               </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Cash by Currency */}
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Cash by Currency</CardTitle>
-              <CardDescription>Distribution across currencies</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="col-span-3 bg-white rounded-xl border border-stone-200 shadow-sm">
+            <div className="p-6 border-b border-stone-100">
+              <div className="font-display font-bold text-xl text-stone-900 mb-1">Cash by Currency</div>
+              <div className="text-sm text-stone-500">Distribution across currencies</div>
+            </div>
+            <div className="p-6">
               {Object.keys(data.accountsByCurrency).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-stone-400">
                   <Wallet className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No accounts found</p>
                 </div>
@@ -847,29 +843,29 @@ export default function DashboardPage() {
                       const balance = acc.balance ?? acc.current_balance ?? acc.available_balance ?? 0;
                       return sum + balance;
                     }, 0);
-                    const percentage = data.totalCashUSD > 0 
-                      ? (totalBalance / data.totalCashUSD) * 100 
+                    const percentage = data.totalCashUSD > 0
+                      ? (totalBalance / data.totalCashUSD) * 100
                       : 0;
-                  
+
                   return (
                     <div key={currency} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{currency}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-medium text-stone-900">{currency}</p>
+                          <p className="text-xs text-stone-500">
                             {accounts.length} account{accounts.length > 1 ? 's' : ''}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">
+                          <p className="font-mono font-semibold tabular-nums text-stone-900">
                             {formatCurrency(totalBalance, currency)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-stone-500">
                             {percentage.toFixed(1)}%
                           </p>
                         </div>
                       </div>
-                      <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"
                             style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -880,37 +876,37 @@ export default function DashboardPage() {
                 })}
               </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Entity Summary */}
         {data.entityStats.length > 0 && (
-        <Card className="mt-4">
-          <CardHeader>
-              <CardTitle>Cash by Entity</CardTitle>
-              <CardDescription>Distribution across legal entities</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="mt-4 bg-white rounded-xl border border-stone-200 shadow-sm">
+          <div className="p-6 border-b border-stone-100">
+            <div className="font-display font-bold text-xl text-stone-900 mb-1">Cash by Entity</div>
+            <div className="text-sm text-stone-500">Distribution across legal entities</div>
+          </div>
+          <div className="p-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {data.entityStats.map((entity) => (
                   <Link
                     key={entity.entity_id}
                     href={`/entities/${entity.entity_id}`}
-                    className="p-4 border rounded-lg hover:bg-accent transition-colors"
+                    className="p-4 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium">{entity.entity_name}</p>
-                      <Badge variant="outline">{entity.account_count} accounts</Badge>
+                      <p className="font-medium text-stone-900">{entity.entity_name}</p>
+                      <Badge variant="outline" className="border-stone-300 text-stone-600">{entity.account_count} accounts</Badge>
                 </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-display font-black tabular-nums text-stone-900">
                       {formatCurrency(entity.total_balance, 'USD')}
                     </p>
                   </Link>
                 ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         )}
         </div>
       </div>

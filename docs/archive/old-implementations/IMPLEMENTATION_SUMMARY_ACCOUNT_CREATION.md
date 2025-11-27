@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Implemented a **production-grade account creation and connection metadata tracking system** for the Stratifi banking integration platform. This implementation follows industry best practices for:
+Implemented a **production-grade account creation and connection metadata tracking system** for the Stratiri banking integration platform. This implementation follows industry best practices for:
 
 - **Data integrity** (IBAN-based deduplication)
 - **Performance** (batch operations, database triggers)

@@ -3,7 +3,7 @@
 ## 🎉 Deployment Summary
 
 **Deployed to Production:** ✅  
-**Production URL:** https://stratifi-pi.vercel.app  
+**Production URL:** https://stratiri-pi.vercel.app  
 **Deployment Date:** November 16, 2024
 
 ---
@@ -445,6 +445,6 @@ ORDER BY date DESC;
 ---
 
 *Generated: November 16, 2024*  
-*Deployed: https://stratifi-pi.vercel.app*  
+*Deployed: https://stratiri-pi.vercel.app*  
 *Status: ✅ Production Ready*
 

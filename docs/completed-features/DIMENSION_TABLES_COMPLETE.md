@@ -8,7 +8,7 @@
 
 ## 📊 **Overview**
 
-Created 6 core dimension tables to support multi-currency operations, global financial management, and standardized financial data across the Stratifi platform.
+Created 6 core dimension tables to support multi-currency operations, global financial management, and standardized financial data across the Stratiri platform.
 
 ---
 
@@ -307,7 +307,7 @@ WHERE c.country_code = 'US' AND fi.swift_code IS NOT NULL;
 - **Migration File:** `scripts/migrations/24-create-dimension-tables.sql`
 - **Executed:** ✅ November 16, 2025
 - **Statements:** 28 successful (33 total, 5 comments skipped)
-- **Deployed to Production:** ✅ https://stratifi-pi.vercel.app
+- **Deployed to Production:** ✅ https://stratiri-pi.vercel.app
 
 ---
 

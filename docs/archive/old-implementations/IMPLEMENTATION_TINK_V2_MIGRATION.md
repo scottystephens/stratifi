@@ -236,7 +236,7 @@ const transactions = await TinkClient.getTransactions(
 
 ### Deployment
 - ✅ Built successfully
-- ✅ Deployed to production (stratifi-pi.vercel.app)
+- ✅ Deployed to production (stratiri-pi.vercel.app)
 - ✅ No linter errors
 - ✅ No breaking changes
 - ✅ Backward compatible
